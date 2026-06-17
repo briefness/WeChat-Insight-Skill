@@ -4,9 +4,35 @@
 
 如果只是写文章草稿，不需要读取本文；在正文里用 `> 【配图位：XXX】` 标清楚即可。
 
-## 工作流
+---
 
-用 `generate_image` 为文章生成卡通风格配图，分三步走。
+## IP 角色：橘猫
+
+每张插图的固定主角是同一只可爱简笔画橘猫。每次生成时都必须带上以下 IP 描述，确保跨图一致性：
+
+```text
+Recurring IP character: a cute chubby orange tabby cat in simple sketch style —
+round body, small dot eyes, tiny nose, orange fur with light brown stripes,
+little paws, expressive face. Same consistent design across all illustrations.
+The cat must actively perform the core action of the scene, not stand decoratively beside it.
+```
+
+**橘猫典型动作池**（根据场景选一个）：
+
+| 场景 | 动作 |
+|------|------|
+| 写代码/工作 | 坐在笔记本前专注敲键盘，表情略紧张 |
+| 踩坑/出错 | 被一堆文件压住，或盯着报错信息发呆 |
+| 前后对比·左 | 焦虑地抱着乱糟糟的东西 |
+| 前后对比·右 | 放松地举着整洁的成果，表情满足 |
+| 流程步骤 | 在每个节点做对应的小动作（翻书、敲键盘、按发布键） |
+| 比喻场景 | 直接成为比喻的一部分（如坐在出租车计价器旁边） |
+| 思考/洞察 | 托腮沉思，旁边飘着灯泡 |
+| 完成/庆祝 | 举着爪子，表情开心 |
+
+---
+
+## 工作流
 
 ### Step 1：找配图锚点
 
@@ -16,10 +42,10 @@
 
 - **概念比较**：两种方案、两种状态、前后对比
 - **流程或因果**：A 导致 B，或步骤 1 -> 步骤 2 -> 步骤 3
-- **核心比喻**：文章里已经出现的生活化比喻，例如“Token 像出租车计价器”
+- **核心比喻**：文章里已经出现的生活化比喻，例如「Token 像出租车计价器」
 - **情绪节点**：开头的痛点场景、结尾的行动号召
 
-每篇文章通常配 2-4 张插图。不要每节都配，插图太密会分散注意力。
+每篇文章通常配 2–4 张插图。不要每节都配，插图太密会分散注意力。
 
 ### Step 2：规划 Shot List
 
@@ -30,38 +56,52 @@
 - 位置：第 X 节「XXX」段落之后
 - 主题：用一句话说清楚要传递的信息
 - 构图模式：左右对比 / 流程箭头 / 单场景 / 数据示意
-- 画面描述：具体元素、角色动作、道具、文字标注
+- 橘猫动作：橘猫在做什么（必须是执行动作）
+- 画面描述：具体元素、道具、文字标注
 ```
+
+标注文字优先直接复用文章里已有的比喻、关键词或小标题，不另起新词。
 
 ### Step 3：用统一风格生成
 
-每次生成图片时，都带上这段英文风格定义。英文保留是为了让图像模型更稳定地理解视觉风格：
+每次生成图片时，都带上风格定义 + IP 描述。英文保留是为了让图像模型更稳定地理解视觉风格：
 
 ```text
-Cartoon illustration style, flat design, vibrant colors, clean white background,
-friendly and playful tone, simple bold outlines, 2D vector-like art,
-no photorealism, no gradients, no shadows, suitable for WeChat articles.
-Aspect ratio 16:9, wide format.
+Hand-drawn cartoon illustration style, loose sketchy ink outlines with slight wobble,
+flat color fills (vibrant but not oversaturated), clean white background,
+generous whitespace with subject occupying 40%-60% of the frame,
+friendly and approachable tone, slight imperfections in line work to feel human and organic,
+sparse handwritten-style annotations in the scene,
+no photorealism, no 3D rendering, no slick vector gradients, no PPT infographic style,
+suitable for WeChat articles. Aspect ratio 16:9, wide format.
+
+Recurring IP character: a cute chubby orange tabby cat in simple sketch style —
+round body, small dot eyes, tiny nose, orange fur with light brown stripes,
+little paws, expressive face. Same consistent design across all illustrations.
+The cat must actively perform the core action of the scene, not stand decoratively beside it.
 ```
 
 Prompt 结构：
 
 ```text
-[风格定义] + [场景描述] + [核心元素] + [需要出现的文字标注]
+[风格定义 + IP描述] + [构图模式] + [场景描述] + [橘猫动作] + [需要出现的文字标注]
 ```
 
 示例 prompt：
 
-- 对比类：`Cartoon illustration, flat design, vibrant colors, white background, two panels side by side: left panel shows a person drowning in tangled video files looking stressed, right panel shows the same person relaxed with a single clean output file, bold Chinese label "之前" on left and "之后" on right.`
-- 流程类：`Cartoon illustration, flat design, vibrant colors, white background, three steps connected by arrows: Step 1 a robot reading a script, Step 2 a film clapperboard with sparks, Step 3 a finished video on a phone screen. Simple bold labels below each step.`
-- 比喻类：`Cartoon illustration, flat design, vibrant colors, white background, a taxi meter ticking up coins beside a speech bubble full of text, showing the concept that more words cost more tokens. Playful style.`
+- 对比类：`Hand-drawn cartoon illustration, loose sketchy ink outlines, flat color fills, white background. Recurring IP: cute chubby orange tabby cat, round body, dot eyes, light brown stripes, consistent design. Two panels side by side: left panel shows the orange cat buried under a pile of tangled files looking overwhelmed, right panel shows the same cat relaxed holding up a single clean document with a satisfied expression. Sparse handwritten-style Chinese label "之前" on left and "之后" on right.`
+- 流程类：`Hand-drawn cartoon illustration, loose sketchy ink outlines, flat color fills, white background. Recurring IP: cute chubby orange tabby cat, round body, dot eyes, light brown stripes. Three steps connected by hand-drawn arrows: Step 1 the orange cat reading notes with a thinking expression, Step 2 the cat typing on a laptop with focus, Step 3 the cat pressing a publish button with a happy paw-raise. Handwritten-style labels below each step. Generous whitespace above and below.`
+- 比喻类：`Hand-drawn cartoon illustration, loose sketchy ink outlines, flat color fills, white background. Recurring IP: cute chubby orange tabby cat, round body, dot eyes, light brown stripes. The orange cat sitting beside a large old-fashioned taxi meter, talking into it with a speech bubble full of scribbled text, coins dropping from the meter's bottom. Sparse handwritten Chinese annotations: "说得越多" near the speech bubble, "花得越多" near the coins, "Token" on the meter face.`
+
+---
 
 ## 生成后检查
 
-生成后检查：
-
 - 不读正文也能一眼看懂这张图在表达什么。
-- 颜色足够明快，手机屏幕上对比度够用。
+- 橘猫是画面主角，在执行核心动作，不是站在旁边装饰。
+- 颜色明快，手机屏幕上对比度够用。
+- 线条有手绘抖动感，不是光滑的矢量线。
+- 画面有足够留白，不拥挤。
 - 如果有文字标注，经过微信压缩后仍然清晰可读。
 - 图片是在帮文章解释和留住读者，而不是单纯装饰。
 
