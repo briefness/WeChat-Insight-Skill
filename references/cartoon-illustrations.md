@@ -64,14 +64,17 @@ The cat must actively perform the core action of the scene, not stand decorative
 
 ### Step 3：用统一风格生成
 
-每次生成图片时，都带上风格定义 + IP 描述。英文保留是为了让图像模型更稳定地理解视觉风格：
+生成前先读取 `references/design-system.md`，获取全局风格 token 和配色系统。叙事插图的专属风格词如下，叠加在全局 token 之后使用：
 
 ```text
+[GLOBAL STYLE — 见 design-system.md]
+
+Illustration-specific style:
 Hand-drawn cartoon illustration style, loose sketchy ink outlines with slight wobble,
-flat color fills (vibrant but not oversaturated), clean white background,
-generous whitespace with subject occupying 40%-60% of the frame,
+flat color fills using the global palette (warm orange #F4845F as accent, light yellow #FDE68A as highlight),
+clean white background (#FAFAF8), generous whitespace with subject occupying 40%-60% of the frame,
 friendly and approachable tone, slight imperfections in line work to feel human and organic,
-sparse handwritten-style annotations in the scene,
+sparse handwritten-style Chinese annotations in the scene,
 no photorealism, no 3D rendering, no slick vector gradients, no PPT infographic style,
 suitable for WeChat articles. Aspect ratio 16:9, wide format.
 
