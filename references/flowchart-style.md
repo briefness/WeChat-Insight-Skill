@@ -2,7 +2,17 @@
 
 只有当文章需要流程图（工作流、步骤图、架构图、决策树等）时才读取这个 reference。
 
-纯叙事性插图（橘猫场景图）走 `cartoon-illustrations.md`，两者不重叠。
+纯叙事性插图（橘猫场景图）走 `cartoon-illustrations.md`。流程图以信息为主，只在橘猫承担明确的信息角色时例外加入。
+
+## 目录
+
+1. 什么时候用流程图
+2. 内容创作原则
+3. 视觉风格与橘猫规则
+4. 配色方案
+5. A-E 图表类型与 Prompt 模板
+6. 图片规格
+7. 生成工作流与检查
 
 ---
 
@@ -81,7 +91,7 @@
 
 ## 视觉风格定义
 
-与橘猫插图保持同一手绘卡通风格，但去除 IP 角色，改为信息优先的图表布局。
+与橘猫插图保持同一手绘风格，默认去除 IP 角色，采用信息优先的图表布局。
 
 生成任何图表前，先读取 `references/design-system.md`，获取全局风格 token 和配色系统。图表类图片的专属风格词如下，叠加在全局 token 之后使用：
 
@@ -103,11 +113,11 @@ friendly and approachable, suitable for WeChat mobile reading.
 
 ## 橘猫融入规则
 
-技术图里可以「巧妙加入」橘猫，但**前提是猫在图里有叙事角色**，不是贴在角落当装饰。
+技术图不为维持 IP 曝光而加猫。只有猫承担“用户、流程发起者、决策者或结果接收者”等信息角色，并通过动作帮助解释流程时才可加入。
 
 ### 判断要不要加
 
-先问一个问题：**如果把猫从图里拿掉，图的信息完整度有没有变化？**
+先完成角色说明：`橘猫代表谁，正在做什么，帮助理解哪段流程或关系？` 然后再问：**如果把猫从图里拿掉，图的信息完整度有没有变化？**
 
 - 没有变化 → 猫只是装饰，不加
 - 有变化（猫在扮演某个角色）→ 可以加
@@ -128,18 +138,19 @@ friendly and approachable, suitable for WeChat mobile reading.
 
 ```text
 # 流程图起点加猫
-Add a small cute chubby orange tabby cat (round body, dot eyes, warm orange fur #F97316,
-hand-drawn ink style) at the left of the first node, looking curious and pointing at it.
+Add a small cute chubby orange tabby cat (round body, dot eyes, warm orange fur #F4845F,
+hand-drawn ink style) representing [the specific user role] at the first node.
+The cat actively performs [the action that starts the workflow] and directs the result into the first node.
 The cat should be small — no larger than the node height. Do not overlap with any label text.
 
 # 对比图两侧加猫
-Left column: add a small orange tabby cat with a confused/puzzled expression (question marks around it).
-Right column: add a small orange tabby cat with a satisfied/happy expression (small stars around it).
+Left column: the cat represents [the before-state user] and actively struggles with [the old process].
+Right column: the same cat represents [the after-state user] and actively completes [the improved process].
 Both cats in the same hand-drawn ink style, small size, not overlapping any labels.
 
 # 原理图旁边加猫
-Add a small orange tabby cat sitting at the bottom-left corner of the diagram,
-looking up at the main illustration with curious eyes. Small size, does not overlap any content.
+Add a small orange tabby cat representing the user at the input side of the mechanism,
+actively pointing to the first input. Small size, does not overlap any content.
 ```
 
 ### 加猫的边界
@@ -148,6 +159,7 @@ looking up at the main illustration with curious eyes. Small size, does not over
 - **不遮挡文字**：猫的位置必须在留白区域，不压在任何标注或节点上
 - **风格一致**：和正文叙事插图里的橘猫保持同一造型（圆润身体、点状眼睛、橘色虎斑）
 - **克制**：一张图里最多一只猫（对比图例外，左右各一只）
+- **不做背景**：不能放在角落旁观、躲在节点后面、做水印或只负责“可爱”
 
 ---
 
@@ -453,7 +465,7 @@ Generous whitespace. Hand-drawn loose borders around each column.
 
 套用对应模板，填入文章里的真实节点名称和标注。节点标注**直接复用文章里已有的词**，不另起新词。
 
-用 `generate_image` 工具生成后，立即用 `![流程图：XXX](路径)` 嵌入正文对应位置。
+用当前环境可用的图片生成工具（如 `generate_image`）生成后，立即用 `![流程图：XXX](路径)` 嵌入正文对应位置。
 
 ### Step 4：生成后检查
 
@@ -477,4 +489,4 @@ Generous whitespace. Hand-drawn loose borders around each column.
 | 流程图 | 解释结构、流程、关系——信息优先 |
 | 橘猫插图 | 传递情绪、比喻、场景——情感优先 |
 
-**不要在流程图里强行加入橘猫**——信息图里的卡通角色会分散对节点内容的注意力。橘猫留给叙事类插图。
+**按功能决定是否加橘猫。** 只有它承担明确的信息角色、执行与流程直接相关的动作，且移除后会损失表达时才加入。不能把猫作为背景或装饰来维持视觉 IP。

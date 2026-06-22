@@ -1,8 +1,14 @@
 # 微信公众号卡通插图生成
 
-只有当用户明确需要为公众号文章生成插图、封面图或具体图片 prompt 时，才读取这个 reference。
+只有在完整图文模式下需要生成叙事、比喻或情绪类插图时，才读取这个 reference。封面图读取 `cover-image.md`。
 
-如果只是写文章草稿，不需要读取本文；在正文里用 `> 【配图位：XXX】` 标清楚即可。
+纯文字降级模式不需要读取本文，按 `SKILL.md` 的格式输出配图建议。
+
+## 目录
+
+1. IP 角色：橘猫
+2. 工作流
+3. 生成后检查
 
 ---
 
@@ -16,6 +22,14 @@ round body, small dot eyes, tiny nose, orange fur with light brown stripes,
 little paws, expressive face. Same consistent design across all illustrations.
 The cat must actively perform the core action of the scene, not stand decoratively beside it.
 ```
+
+橘猫不是为了维持 IP 曝光而出现。生成前先写一句：
+
+```text
+橘猫代表 [具体人物或状态]，正在 [主题核心动作]，帮助读者理解 [本图要表达的变化或关系]。
+```
+
+如果只能写出“橘猫站在旁边”“橘猫看着画面”或“增加可爱感”，说明它没有功能，不应生成这张橘猫图。应改用流程图、真实素材或不配图。
 
 **橘猫典型动作池**（根据场景选一个）：
 
@@ -102,6 +116,8 @@ Prompt 结构：
 
 - 不读正文也能一眼看懂这张图在表达什么。
 - 橘猫是画面主角，在执行核心动作，不是站在旁边装饰。
+- 能用一句话说清橘猫代表谁、做什么、帮助理解什么。
+- 移除橘猫后，本图表达的动作、状态或对比会明显缺失；否则不应加猫。
 - 颜色明快，手机屏幕上对比度够用。
 - 线条有手绘抖动感，不是光滑的矢量线。
 - 画面有足够留白，不拥挤。
