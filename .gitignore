@@ -6,3 +6,7 @@ config.local.json
 .env
 .env.local
 
+# Python 缓存（严禁提交字节码）
+__pycache__/
+*.pyc
+*.pyo

@@ -5,6 +5,7 @@
 
 用法:
     python publish_to_wechat.py <markdown_file> [--cover <cover_image>] [--config <config_file>]
+                                [--author <author_name>] [--digest <digest_text>] [--html-only]
 
 环境变量:
     WECHAT_APP_ID      公众号 AppID（优先于配置文件）
@@ -45,10 +46,14 @@ def extract_title_and_body(md_text: str):
     return title, body
 
 
-def md_to_wechat_html(md_text: str) -> str:
+def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
     """
     将 Markdown 转换为公众号编辑器兼容的 HTML。
     使用 inline 样式，不依赖外部 CSS，确保粘贴后样式不丢失。
+
+    Args:
+        md_text: Markdown 文本内容
+        primary_color: 品牌主色，用于引用块左边框和链接颜色，默认暖橙 #F4845F
     """
     _, body = extract_title_and_body(md_text)
     lines = body.split('\n')
@@ -109,7 +114,7 @@ def md_to_wechat_html(md_text: str) -> str:
             # P1: 保留引用块内的换行，不压成一行
             quote_inner = '<br/>'.join(quote_lines)
             html_parts.append(
-                f'<blockquote style="border-left: 4px solid #F4845F; '
+                f'<blockquote style="border-left: 4px solid {primary_color}; '
                 f'padding: 12px 16px; margin: 16px 0; '
                 f'background: #FFF7F3; color: #4a4a4a; '
                 f'font-size: 14px; line-height: 1.8;">'
@@ -273,7 +278,7 @@ def inline_format(text: str) -> str:
         r'\[([^\]]+)\]\(([^)]+)\)',
         lambda m: (
             f'<a href="{escape_html(m.group(2))}" '
-            f'style="color: #F4845F; text-decoration: none;">{m.group(1)}</a>'
+            f'style="color: {primary_color}; text-decoration: none;">{m.group(1)}</a>'
         ),
         text
     )
@@ -681,7 +686,7 @@ def publish_article(
     md_text = upload_local_images(md_text, api, md_path.parent)
 
     # 转换为 HTML
-    html_content = md_to_wechat_html(md_text)
+    html_content = md_to_wechat_html(md_text, primary_color=brand_cfg.get('primary_color', '#F4845F'))
     print(f"[INFO] HTML 转换完成，约 {len(html_content)} 字符")
 
     # 上传封面图（如果提供）
@@ -747,6 +752,11 @@ def main():
 
     args = parser.parse_args()
 
+    # 加载配置（两条路径都需要，提前到此处）
+    config = load_config(args.config)
+    brand_cfg = config.get('brand', {})
+    primary_color = brand_cfg.get('primary_color', '#F4845F')
+
     # 只生成 HTML 模式
     if args.html_only:
         md_path = Path(args.markdown)
@@ -754,14 +764,11 @@ def main():
             print(f"[ERROR] 文件不存在：{args.markdown}", file=sys.stderr)
             sys.exit(1)
         md_text = md_path.read_text(encoding='utf-8')
-        html = md_to_wechat_html(md_text)
+        html = md_to_wechat_html(md_text, primary_color=primary_color)
         out_path = md_path.with_suffix('.html')
         out_path.write_text(html, encoding='utf-8')
         print(f"[OK] HTML 已生成：{out_path}")
         return
-
-    # 加载配置
-    config = load_config(args.config)
 
     try:
         result = publish_article(
