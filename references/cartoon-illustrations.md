@@ -78,11 +78,11 @@ The cat must actively perform the core action of the scene, not stand decorative
 
 ### Step 3：用统一风格生成
 
-生成前先读取 `references/design-system.md`，获取全局风格 token 和配色系统。叙事插图的专属风格词如下，叠加在全局 token 之后使用：
+生成前先读取 `references/design-system.md`，获取全局风格 token 和配色系统。叙事插图的专属风格词如下，叠加在全局 token 之后使用。
+
+> ⚠️ 实际生成 prompt 时，先将 `design-system.md` 全局视觉 Token 代码块的内容（从 `Hand-drawn aesthetic...` 行起）内联写入，**不要复制 `[GLOBAL STYLE — ...]` 标识行**，再在其后追加以下插图专属风格词和 IP 描述：
 
 ```text
-[GLOBAL STYLE — 见 design-system.md]
-
 Illustration-specific style:
 Hand-drawn cartoon illustration style, loose sketchy ink outlines with slight wobble,
 flat color fills using the global palette (warm orange #F4845F as accent, light yellow #FDE68A as highlight),
@@ -98,11 +98,8 @@ little paws, expressive face. Same consistent design across all illustrations.
 The cat must actively perform the core action of the scene, not stand decoratively beside it.
 ```
 
-Prompt 结构：
-
-```text
-[风格定义 + IP描述] + [构图模式] + [场景描述] + [橘猫动作] + [需要出现的文字标注]
-```
+Prompt 按以下顺序拼接（使用时用具体内容填入，不要把中文描述词输出进 prompt）：
+全局风格描述 → 插图专属风格词 + IP 描述 → 构图模式 → 场景描述 → 橘猫动作 → 需要出现的文字标注
 
 示例 prompt：
 

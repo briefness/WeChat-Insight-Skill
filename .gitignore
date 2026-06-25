@@ -1,1 +1,8 @@
 .DS_Store
+
+# 本地配置（含敏感凭证，严禁提交）
+.wechat-writer-config.json
+config.local.json
+.env
+.env.local
+

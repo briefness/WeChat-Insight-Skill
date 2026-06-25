@@ -19,10 +19,12 @@
 
 ## 全局视觉 Token
 
-以下是正文插图和图表共享的视觉基础，每次生成正文图片都必须带上：
+以下是正文插图和图表共享的视觉基础，每次生成正文图片都必须带上。
+
+> ⚠️ **使用注意**：下方代码块的第一行 `[GLOBAL STYLE — WeChat-Insight-Skill]` 是文档内的标识符，**不能复制进发给图像模型的 prompt**。生成 prompt 时，从第二行（`Hand-drawn aesthetic...`）开始内联，去掉方括号标识行。
 
 ```text
-[GLOBAL STYLE — WeChat-Insight-Skill]
+[GLOBAL STYLE — WeChat-Insight-Skill]  ← 此行仅作文档标识，生成 prompt 时删除此行
 Hand-drawn aesthetic with loose sketchy ink outlines and slight wobble,
 slight imperfections in line work to feel human and organic (not mechanical),
 flat color fills — no gradients, no 3D shading, no drop shadows,
@@ -218,15 +220,11 @@ these are the specific characters: 搜(search) 文(text) 档(file).
 
 ## 各图片类型的风格叠加关系
 
-每次生成图片时，prompt 结构如下：
+每次生成图片时，prompt 按以下顺序拼接三段内容（以下为示意，实际生成时用具体内容替换，不要把尖括号或中文占位描述输出进 prompt）：
 
-```
-[全局风格 token（本文件）]
-+
-[该图片类型的专属风格词（对应 reference）]
-+
-[具体场景/内容描述]
-```
+1. **全局风格描述**：从本文件「全局视觉 Token」代码块第二行起内联，去掉方括号标识行
+2. **该图片类型的专属风格词**：从对应 reference（`cartoon-illustrations.md` / `flowchart-style.md` / `cover-image.md`）中取出专属风格描述
+3. **具体场景/内容描述**：当前图片的画面内容、节点文字、人物动作等
 
 **专属风格词的作用是「覆盖或补充」全局 token，不是替换。** 如果专属风格词与全局 token 有冲突，以专属风格词为准（例如封面图使用深色底，覆盖全局的白底规定）。
 

@@ -28,7 +28,7 @@
 - 两侧各留约 20% 的边距作为裁切缓冲
 - 不能把关键信息放在图片边缘
 
-生成时始终使用 **16:9** 比例（最接近 2.35:1 且图像模型支持稳定），再在 prompt 里指定主体居中。
+生成时直接使用 **2.35:1** 比例，在 prompt 中明确写 `ultra-wide 2.35:1 cinematic aspect ratio`，并强调所有主视觉元素集中在画面中央 60% 区域内，两侧留空。无需生成后手动裁切。
 
 ---
 
@@ -52,7 +52,7 @@
 
 没有真实素材，或用户明确要求 AI 生成封面时使用。根据文章调性选对应风格。
 
-生成前先读取 `references/design-system.md` 获取共享色板和 IP 定义，但不要直接粘贴正文图片的全局风格 token。封面图按所选风格使用以下覆盖规则：
+生成前先读取 `references/design-system.md`，只取「全局配色系统」中的色板数值和「IP 角色：橘猫」定义。**不要把正文图片的全局风格 token（`Hand-drawn aesthetic...` 那段）粘贴进封面 prompt**——封面有独立的风格模板，直接按下方「调性风格」对应的 Prompt 模板重新写。封面图按所选风格使用以下覆盖规则：
 
 - **背景按风格覆盖**：独立开发者风格使用暖白底；推广种草和硬核技术风格可使用深色底
 - **配色部分继承**：暖橙（`#F4845F`）作为强调色，与正文插图保持呼应
@@ -77,27 +77,33 @@
 **Prompt 模板：**
 
 ```text
-WeChat article cover image in hand-drawn poster style, wide 16:9 format, centered safe zone with 20% margins.
+WeChat article cover image in hand-drawn poster style.
+ultra-wide 2.35:1 cinematic aspect ratio (much wider than tall).
+
+SAFE ZONE: All text and illustration MUST be placed within the CENTER 60% of the image width.
+The leftmost 20% and rightmost 20% must remain empty background only —
+this ensures content survives a 1:1 center crop on WeChat feeds.
 
 Background: warm off-white (#FAFAF8), very subtle hand-drawn sketch texture —
 faint loose pencil-stroke hatching at extremely low opacity in the corners,
 giving a paper-like tactile feel. Not distracting.
 
-Main illustration (right-center, large, ~40% of image height):
-- Use the orange cat only when it has a functional narrative role.
-- The cat represents [specific person or state] and actively performs [topic-defining action].
-- Its action helps explain [core topic, contrast, or outcome]. Never use it as background decoration.
-- Cat design when used: round body, dot eyes, warm orange fur (#F4845F), hand-drawn brown stripes.
-- Around the cat: 2-3 small hand-drawn floating elements related to the topic
-  (e.g., lightbulb, magnifying glass, book pages, code brackets)
-- All elements in sketchy ink style, warm orange or dark ink color
-- Everything feels loose, organic, hand-crafted
+Center zone layout (within middle 60% of width, vertically centered):
+- LEFT HALF of center zone — Typography block:
+  - Main title "[文章标题]" in large bold dark ink (#1A1A1A), strong weight,
+    slightly imperfect edges suggesting hand lettering
+  - Subtitle "[副标题]" in medium dark gray (#4B5563), smaller, one line below title
+  - NO category tag, NO badge, NO pill label of any kind
 
-Typography (left side, vertically centered):
-- Main title "[文章标题]" in large bold dark ink (#1A1A1A), strong weight,
-  slightly imperfect edges suggesting hand lettering
-- Subtitle "[副标题]" in medium dark gray (#4B5563), smaller, one line below title
-- NO category tag, NO badge, NO pill label of any kind
+- RIGHT HALF of center zone — Illustration:
+  - Use the orange cat only when it has a functional narrative role.
+  - The cat represents [specific person or state] and actively performs [topic-defining action].
+  - Its action helps explain [core topic, contrast, or outcome]. Never use it as background decoration.
+  - Cat design when used: round body, dot eyes, warm orange fur (#F4845F), hand-drawn brown stripes.
+  - Around the cat: 2-3 small hand-drawn floating elements related to the topic
+    (e.g., lightbulb, magnifying glass, book pages, code brackets)
+  - All elements in sketchy ink style, warm orange or dark ink color
+  - Everything feels loose, organic, hand-crafted
 
 Color palette: warm white + dark ink + warm orange (#F4845F) only.
 No harsh blacks, no neon, no gradients.
@@ -108,16 +114,20 @@ Eye-catching through character and warmth, not loud colors.
 **示例：**
 
 ```text
-WeChat article cover in hand-drawn poster style, wide 16:9, centered safe zone.
+WeChat article cover in hand-drawn poster style.
+ultra-wide 2.35:1 cinematic aspect ratio.
+
+SAFE ZONE: all content within center 60% of width. Left 20% and right 20% are empty background.
 
 Background: warm off-white (#FAFAF8), faint corner hatching texture.
 
-Right side illustration: a chubby orange tabby cat represents the person asking an AI question.
-The cat actively searches an open reference book, finds the relevant page, and then passes that page toward an answer bubble.
+Center zone — right half illustration:
+A chubby orange tabby cat represents the person asking an AI question.
+The cat actively searches an open reference book, finds the relevant page, and then points toward an answer bubble.
 This action visually explains "retrieve information before answering", rather than using the cat as decoration.
 Floating elements: small lightbulb, magnifying glass, loose book pages — sketchy ink style.
 
-Left side typography:
+Center zone — left half typography:
 - Title "RAG 是什么" in large bold dark ink (#1A1A1A)
 - Subtitle "让 AI 先查资料再回答" in dark gray (#4B5563)
 - NO tag, NO label, NO badge
@@ -137,7 +147,7 @@ Color: warm white + dark ink + warm orange only. Hand-crafted zine aesthetic.
 - 主视觉区放产品截图 mockup 或效果对比
 - 可以有少量装饰性光点/粒子，不过度
 
-**Prompt 模板：**
+**Prompt 模板（使用时将方括号内容替换为具体值，不要把方括号文字输出进 prompt）：**
 
 ```text
 Modern tech product cover image, gradient background from [深色] to [中色],
@@ -163,7 +173,7 @@ Product name label: "[产品名]"
 - 标题文字用等宽字体风格（prompt 里描述，不是真的等宽）
 - 配色用终端绿 `#00FF41` 或蓝 `#58A6FF` 作为强调色
 
-**Prompt 模板：**
+**Prompt 模板（使用时将方括号内容替换为具体值，不要把方括号文字输出进 prompt）：**
 
 ```text
 Dark hacker-aesthetic tech cover, pure black or very dark background (#0D1117),

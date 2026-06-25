@@ -1,0 +1,30 @@
+{
+  "author": {
+    "name": "",
+    "bio": "",
+    "signature": "",
+    "tone": "indie-dev",
+    "fixed_cta": ""
+  },
+  "wechat": {
+    "app_id": "",
+    "app_secret": "",
+    "default_author": "",
+    "default_digest_source": "first_paragraph",
+    "need_open_comment": false,
+    "only_fans_can_comment": false
+  },
+  "brand": {
+    "primary_color": "#F4845F",
+    "secondary_color": "#FDE68A",
+    "cover_style": "indie-dev",
+    "use_orange_cat_ip": true
+  },
+  "output": {
+    "title_count": 5,
+    "digest_min_length": 40,
+    "digest_max_length": 80,
+    "forward_copy_count": 2,
+    "image_mode": "auto"
+  }
+}

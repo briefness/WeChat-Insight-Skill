@@ -93,11 +93,11 @@
 
 与橘猫插图保持同一手绘风格，默认去除 IP 角色，采用信息优先的图表布局。
 
-生成任何图表前，先读取 `references/design-system.md`，获取全局风格 token 和配色系统。图表类图片的专属风格词如下，叠加在全局 token 之后使用：
+生成任何图表前，先读取 `references/design-system.md`，获取全局风格 token 和配色系统。图表类图片的专属风格词如下，叠加在全局 token 之后使用。
+
+> ⚠️ 实际生成 prompt 时，先将 `design-system.md` 全局视觉 Token 代码块的内容（从 `Hand-drawn aesthetic...` 行起）内联写入，**不要把 `[GLOBAL STYLE — ...]` 标识行复制进 prompt**，再在其后追加以下专属风格词：
 
 ```text
-[GLOBAL STYLE — 见 design-system.md]
-
 Chart-specific style:
 Hand-drawn infographic style, loose sketchy ink outlines with slight wobble,
 flat color node fills using the global palette — warm orange (#F4845F) for primary nodes,
@@ -113,45 +113,74 @@ friendly and approachable, suitable for WeChat mobile reading.
 
 ## 橘猫融入规则
 
-技术图不为维持 IP 曝光而加猫。只有猫承担“用户、流程发起者、决策者或结果接收者”等信息角色，并通过动作帮助解释流程时才可加入。
+橘猫是正文图片的默认 IP。生成每张图前，**主动**为橘猫寻找功能性角色——流程发起者、结果接收者、状态对比体验者、概念使用者等。能找到角色就加，找不到才不加。
 
-### 判断要不要加
+### 判断方式
 
-先完成角色说明：`橘猫代表谁，正在做什么，帮助理解哪段流程或关系？` 然后再问：**如果把猫从图里拿掉，图的信息完整度有没有变化？**
+先写出角色说明：`橘猫代表谁，正在做什么，帮助理解哪段流程或关系？`
 
-- 没有变化 → 猫只是装饰，不加
-- 有变化（猫在扮演某个角色）→ 可以加
+- 能写出来 → 加，并把角色说明写进 prompt
+- 写不出来（猫只是站在旁边看）→ 不加
 
-### 哪些图适合加
+### 核心设计原则：动作即内容
+
+**猫的动作必须是图中某个节点或概念的具象化，不是旁观者姿态。**
+
+猫"站在节点旁边指一下"是最低限度，更好的做法是让猫的肢体动作本身就等于那个流程步骤：
+
+| 节点内容 | 差的融入方式 | 好的融入方式 |
+|----------|------------|------------|
+| 用户提问 | 猫站在节点左边看着 | 猫双手捧着写有「?」的纸条，把它递进节点 |
+| 检索知识库 | 猫指向书架 | 猫趴在书架上翻书，手指滑过书脊找目标页 |
+| 生成回答 | 猫站在节点右边 | 猫从最后节点接过一张答案纸，点头确认 |
+| 旧方案痛点 | 左列放一只看起来不高兴的猫 | 猫坐在散落的文件堆里抓头，状态本身就是"信息混乱" |
+| 向量相似度 | 猫指向两个圆圈 | 猫拿着放大镜对比两张卡片，眉头紧锁找相似点 |
+
+**一句话检验：** 把猫的动作用一个动词描述出来，这个动词应该和节点的标签词直接对应。对应得上 → 融入合理。对应不上 → 改动作或不加猫。
+
+### 各图类型默认加猫
 
 | 图类型 | 橘猫的叙事角色 | 加法 |
 |--------|--------------|------|
-| 线性流程图（A） | 流程的「发起者」或「接收者」 | 猫站在第一个节点左侧提问，或站在最后节点右侧拿到结果 |
-| 原理示意图（D） | 「用户」视角，观察机制运转 | 猫站在意象旁边，带出「它在使用这个东西」的感觉 |
-| 对比清单图（E） | 左右两种状态的体验者 | 左列一只困惑猫，右列一只满意猫，强化对比感 |
-| 架构关系图（C） | ❌ 通常不加 | 节点密集，猫挤进去会让图变乱 |
-| 分支决策图（B） | 视情况 | 只在分支入口处放一只「选择中」的猫，不放在每个分支上 |
+| 线性流程图（A） | 流程的「发起者」或「接收者」 | 猫站在第一个节点左侧提问，或站在最后节点右侧拿到结果；**默认加** |
+| 原理示意图（D） | 「用户」视角，观察或触发机制运转 | 猫站在意象输入侧，带出「它在使用这个东西」的感觉；**默认加** |
+| 对比清单图（E） | 左右两种状态的体验者 | 左列一只困惑猫，右列一只满意猫，强化对比感；**默认加** |
+| 分支决策图（B） | 决策的发起者 | 只在分支入口处放一只「选择中」的猫，不放在每个分支上；**默认加** |
+| 架构关系图（C） | ❌ 通常不加 | 节点密集，猫挤进去会让图变乱；例外：有明确「用户入口」节点时可在该节点旁加一只小猫 |
 
 ### Prompt 写法
+
+加猫前先确定"动作动词"，再写 prompt。动词要和节点标签直接对应。
 
 加入橘猫时，在图的 prompt 末尾补充：
 
 ```text
-# 流程图起点加猫
+# 流程图起点加猫（动作即内容写法）
 Add a small cute chubby orange tabby cat (round body, dot eyes, warm orange fur #F4845F,
-hand-drawn ink style) representing [the specific user role] at the first node.
-The cat actively performs [the action that starts the workflow] and directs the result into the first node.
+hand-drawn ink style) representing [the specific user role].
+The cat's body action IS the first step: [具体肢体动作描述，动词对应节点标签].
+Example actions:
+- "用户提问" → cat holds up a small paper card with a "?" written on it with both paws,
+  actively handing/pushing it into the first node
+- "检索知识库" → cat leans into a bookshelf, one paw sliding along the book spines,
+  scanning for the right page
+- "生成回答" → cat receives a paper coming out of the last node, reads it and nods
 The cat should be small — no larger than the node height. Do not overlap with any label text.
 
-# 对比图两侧加猫
-Left column: the cat represents [the before-state user] and actively struggles with [the old process].
-Right column: the same cat represents [the after-state user] and actively completes [the improved process].
-Both cats in the same hand-drawn ink style, small size, not overlapping any labels.
+# 对比图两侧加猫（动作即内容写法）
+Left column: the cat embodies the before-state through a specific action —
+  [描述猫的身体姿态，如：sitting in a pile of scattered papers, pawing at its head in confusion]
+Right column: the same cat embodies the after-state through a contrasting action —
+  [描述猫的身体姿态，如：sitting upright, holding a neat single sheet, looking satisfied]
+Both cats same hand-drawn ink style, small size, not overlapping any labels.
 
-# 原理图旁边加猫
-Add a small orange tabby cat representing the user at the input side of the mechanism,
-actively pointing to the first input. Small size, does not overlap any content.
+# 原理图加猫（动作即内容写法）
+Add a small orange tabby cat representing the user.
+The cat's action concretely represents the input step:
+  [描述猫的身体动作，如：holding a speech bubble card and feeding it into the mechanism's input]
+Small size, does not overlap any content.
 ```
+
 
 ### 加猫的边界
 
@@ -278,6 +307,8 @@ Group related components with a loose dashed boundary if needed.
 
 **视觉风格定义（生成时必带）：**
 
+> ⚠️ 实际生成 prompt 时，先将 `design-system.md` 全局视觉 Token 代码块的内容（从 `Hand-drawn aesthetic...` 行起）内联写入，**不要把 `[GLOBAL STYLE — ...]` 标识行复制进 prompt**，再在其后追加以下原理图专属风格词：
+
 ```text
 Hand-drawn concept diagram style, loose sketchy ink outlines with slight wobble,
 flat color fills — warm orange (#F4845F) for the core concept element or visual anchor,
@@ -353,9 +384,9 @@ Layout: horizontal, left to right flow, meter is the visual anchor in the center
 
 **视觉风格定义（生成时必带）：**
 
-```text
-[GLOBAL STYLE — 见 design-system.md]
+> ⚠️ 实际生成 prompt 时，先内联 `design-system.md` 全局视觉 Token（从 `Hand-drawn aesthetic...` 行起），**不复制 `[GLOBAL STYLE — ...]` 标识行**，再追加以下对比图专属风格词：
 
+```text
 Comparison chart style:
 Hand-drawn two-column layout with a dotted vertical divider in the center,
 warm orange (#F4845F) rounded label for the positive/left column header,
@@ -372,25 +403,26 @@ no color-coded rows, no grid lines. 4:3 aspect ratio.
 - 分栏线用手绘虚线，不是实线表格边框
 - 每项内容控制在 **4-6 个汉字**，超过则拆成两行或缩短表达
 
-**Prompt 模板：**
+**Prompt 模板（使用时将全局 token 内联在开头，再拼接以下内容，不要保留方括号占位符）：**
 
 ```text
-[GLOBAL STYLE — 见 design-system.md]
+# 先内联 design-system.md 全局视觉 Token（Hand-drawn aesthetic... 起的全部内容）
+# 再接以下对比图描述：
 
 Comparison chart style: hand-drawn two-column layout, dotted vertical divider,
 warm orange rounded header on left, light gray rounded header on right,
 white background, handwritten Chinese text, loose hand-drawn borders. 4:3 aspect ratio.
 
-Left column header: "[正面标签，如「✅ 适合」]"
+Left column header: "[填入正面标签，如「✅ 适合」]"
 Left column items (handwritten-style):
-- "[条目1]"
-- "[条目2]"
-- "[条目3]"
+- "[填入条目1]"
+- "[填入条目2]"
+- "[填入条目3]"
 
-Right column header: "[负面或对比标签，如「❌ 不适合」]"
+Right column header: "[填入负面或对比标签，如「❌ 不适合」]"
 Right column items:
-- "[条目1]"
-- "[条目2]"
+- "[填入条目1]"
+- "[填入条目2]"
 
 Generous whitespace above and below. Clean, minimal, no decorative noise.
 ```
@@ -425,7 +457,7 @@ Generous whitespace. Hand-drawn loose borders around each column.
 | 文字标注 | 每个节点标注**不超过 6 个汉字**，保证手机屏幕可读 |
 | 背景 | 白色或极浅暖灰，不用深色底（微信夜间模式会反色） |
 
-> 节点超过 7 个时，用 PIL 脚本竖向拼接两张图，中间加深色标注条区分「第一阶段」/「第二阶段」。参考 SKILL.md 多图拼接规范。
+> 节点超过 7 个时，将流程拆成两张图分别生成，每张不超过 7 个节点。用 PIL 脚本竖向拼接，在两张图中间插入一条深色横向标注条（如「第一阶段」/「第二阶段」），标注条背景色用 `#1A1A1A`，白色文字。拼接后总高度不超过宽度的 2 倍，避免手机滑动过多。
 
 ---
 
