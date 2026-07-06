@@ -56,10 +56,58 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
         primary_color: 品牌主色，用于引用块左边框和链接颜色，默认暖橙 #F4845F
     """
     _, body = extract_title_and_body(md_text)
-    lines = body.split('\n')
+
+    # 截掉元信息区块：转发文案、发布前检查不输出到公众号正文
+    _STRIP_SECTIONS = ('## 转发文案', '## 发布前检查')
+    body_lines = body.split('\n')
+    cutoff = len(body_lines)
+    for idx, ln in enumerate(body_lines):
+        if any(ln.strip().startswith(sec) for sec in _STRIP_SECTIONS):
+            # 往前找最近的分隔线，一并截掉
+            cutoff = idx
+            while cutoff > 0 and body_lines[cutoff - 1].strip() in ('---', '***', '___', ''):
+                cutoff -= 1
+            break
+    lines = body_lines[:cutoff]
     html_parts = []
     in_list = False
     list_type = None
+
+    def inline_format(text: str) -> str:
+        """处理行内格式：加粗、行内代码、链接。捕获外层 primary_color。"""
+        # 行内代码
+        text = re.sub(
+            r'`([^`]+)`',
+            lambda m: (
+                f'<code style="background: #f6f8fa; padding: 2px 6px; '
+                f'border-radius: 3px; font-size: 13px; '
+                f'font-family: Consolas, Monaco, monospace; '
+                f'color: #d6336c;">{escape_html(m.group(1))}</code>'
+            ),
+            text
+        )
+        # 加粗
+        text = re.sub(
+            r'\*\*([^*]+)\*\*',
+            lambda m: f'<strong style="font-weight: bold; color: {primary_color};">{m.group(1)}</strong>',
+            text
+        )
+        # 斜体
+        text = re.sub(
+            r'(?<!\*)\*([^*]+)\*(?!\*)',
+            lambda m: f'<em>{m.group(1)}</em>',
+            text
+        )
+        # 链接
+        text = re.sub(
+            r'\[([^\]]+)\]\(([^)]+)\)',
+            lambda m: (
+                f'<a href="{escape_html(m.group(2))}" '
+                f'style="color: {primary_color}; text-decoration: none;">{m.group(1)}</a>'
+            ),
+            text
+        )
+        return text
 
     i = 0
     while i < len(lines):
@@ -81,9 +129,11 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
                 in_list = False
             text = line[3:].strip()
             html_parts.append(
-                f'<h2 style="font-size: 18px; font-weight: bold; '
-                f'margin: 24px 0 12px 0; color: #1a1a1a; '
-                f'line-height: 1.6;">{inline_format(text)}</h2>'
+                f'<h2 style="font-size: 19px; font-weight: bold; '
+                f'margin: 32px 0 14px 0; color: #1a1a1a; '
+                f'line-height: 1.5; padding-left: 14px; '
+                f'border-left: 4px solid {primary_color}; '
+                f'letter-spacing: 0.02em;">{inline_format(text)}</h2>'
             )
             i += 1
             continue
@@ -96,8 +146,10 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
             text = line[4:].strip()
             html_parts.append(
                 f'<h3 style="font-size: 16px; font-weight: bold; '
-                f'margin: 20px 0 10px 0; color: #1a1a1a; '
-                f'line-height: 1.6;">{inline_format(text)}</h3>'
+                f'margin: 24px 0 10px 0; color: #3a3a3a; '
+                f'line-height: 1.6; padding-left: 10px; '
+                f'border-left: 3px solid #F4845F88; '
+                f'letter-spacing: 0.01em;">{inline_format(text)}</h3>'
             )
             i += 1
             continue
@@ -114,10 +166,12 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
             # P1: 保留引用块内的换行，不压成一行
             quote_inner = '<br/>'.join(quote_lines)
             html_parts.append(
-                f'<blockquote style="border-left: 4px solid {primary_color}; '
-                f'padding: 12px 16px; margin: 16px 0; '
-                f'background: #FFF7F3; color: #4a4a4a; '
-                f'font-size: 14px; line-height: 1.8;">'
+                f'<blockquote style="border-left: 5px solid {primary_color}; '
+                f'padding: 14px 18px; margin: 20px 0; '
+                f'background: linear-gradient(135deg, #FFF7F3 0%, #FFFAF8 100%); '
+                f'color: #555; border-radius: 0 8px 8px 0; '
+                f'font-size: 14.5px; line-height: 1.9; '
+                f'font-style: italic;">'
                 f'{quote_inner}</blockquote>'
             )
             continue
@@ -128,14 +182,19 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
                 if in_list:
                     html_parts.append(f'</{list_type}>')
                 html_parts.append(
-                    '<ul style="margin: 12px 0; padding-left: 24px; '
-                    'font-size: 15px; line-height: 2;">'
+                    '<ul style="margin: 14px 0; padding-left: 8px; '
+                    'font-size: 15px; line-height: 1.9; list-style: none;">'
                 )
                 in_list = True
                 list_type = 'ul'
             text = re.sub(r'^[-*+] ', '', line).strip()
             html_parts.append(
-                f'<li style="margin-bottom: 6px;">{inline_format(text)}</li>'
+                f'<li style="margin-bottom: 8px; padding-left: 20px; position: relative; '
+                f'color: #333;">'
+                f'<span style="position: absolute; left: 0; top: 0.55em; '
+                f'width: 7px; height: 7px; border-radius: 50%; '
+                f'background: {primary_color}; display: inline-block;"></span>'
+                f'{inline_format(text)}</li>'
             )
             i += 1
             continue
@@ -146,14 +205,16 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
                 if in_list:
                     html_parts.append(f'</{list_type}>')
                 html_parts.append(
-                    '<ol style="margin: 12px 0; padding-left: 24px; '
-                    'font-size: 15px; line-height: 2;">'
+                    '<ol style="margin: 14px 0; padding-left: 24px; '
+                    'font-size: 15px; line-height: 1.9; '
+                    'counter-reset: ol-counter; list-style: none;">'
                 )
                 in_list = True
                 list_type = 'ol'
             text = re.sub(r'^\d+\. ', '', line).strip()
             html_parts.append(
-                f'<li style="margin-bottom: 6px;">{inline_format(text)}</li>'
+                f'<li style="margin-bottom: 10px; padding-left: 8px; '
+                f'color: #333;">{inline_format(text)}</li>'
             )
             i += 1
             continue
@@ -171,11 +232,13 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
             i += 1  # 跳过结束 ```
             code_text = '\n'.join(code_lines)
             html_parts.append(
-                f'<pre style="background: #f6f8fa; border-radius: 6px; '
-                f'padding: 12px 16px; margin: 16px 0; '
-                f'font-size: 13px; font-family: Consolas, Monaco, monospace; '
-                f'line-height: 1.6; overflow-x: auto; '
-                f'color: #333;"><code>{escape_html(code_text)}</code></pre>'
+                f'<pre style="background: #1e1e2e; border-radius: 10px; '
+                f'padding: 16px 20px; margin: 20px 0; '
+                f'font-size: 13px; font-family: Consolas, Monaco, \'Courier New\', monospace; '
+                f'line-height: 1.7; overflow-x: auto; '
+                f'color: #cdd6f4; border: 1px solid #313244; '
+                f'box-shadow: 0 4px 12px rgba(0,0,0,0.15);">'
+                f'<code style="background: none; padding: 0; color: inherit; font-size: inherit;">{escape_html(code_text)}</code></pre>'
             )
             continue
 
@@ -188,11 +251,14 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
             alt = img_match.group(1)
             src = img_match.group(2)
             html_parts.append(
-                f'<p style="text-align: center; margin: 16px 0;">'
+                f'<figure style="margin: 24px 0; text-align: center;">'
                 f'<img src="{escape_html(src)}" alt="{escape_html(alt)}" '
                 f'style="max-width: 100%; height: auto; '
-                f'border-radius: 4px; display: block; margin: 0 auto;" />'
-                f'</p>'
+                f'border-radius: 10px; display: block; margin: 0 auto; '
+                f'box-shadow: 0 4px 16px rgba(0,0,0,0.10);" />'
+                f'<figcaption style="margin-top: 8px; font-size: 12px; '
+                f'color: #999; line-height: 1.6;">{escape_html(alt)}</figcaption>'
+                f'</figure>'
             )
             i += 1
             continue
@@ -203,8 +269,14 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
                 html_parts.append(f'</{list_type}>')
                 in_list = False
             html_parts.append(
-                '<hr style="border: none; border-top: 1px solid #e5e5e5; '
-                'margin: 24px 0;" />'
+                '<div style="margin: 28px auto; text-align: center; line-height: 0;">'
+                '<span style="display: inline-block; width: 32px; height: 2px; '
+                'background: #F4845F; border-radius: 2px; margin: 0 4px;"></span>'
+                '<span style="display: inline-block; width: 8px; height: 8px; '
+                'border-radius: 50%; background: #F4845F; margin: 0 4px; vertical-align: middle;"></span>'
+                '<span style="display: inline-block; width: 32px; height: 2px; '
+                'background: #F4845F; border-radius: 2px; margin: 0 4px;"></span>'
+                '</div>'
             )
             i += 1
             continue
@@ -223,9 +295,9 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
 
         para_text = ' '.join(para_lines).strip()
         html_parts.append(
-            f'<p style="font-size: 15px; line-height: 2; '
-            f'margin: 0 0 16px 0; color: #333; '
-            f'text-align: justify;">{inline_format(para_text)}</p>'
+            f'<p style="font-size: 15.5px; line-height: 2.1; '
+            f'margin: 0 0 20px 0; color: #333; '
+            f'text-align: justify; letter-spacing: 0.01em;">{inline_format(para_text)}</p>'
         )
 
     if in_list:
@@ -248,41 +320,7 @@ def is_block_start(line: str) -> bool:
     return False
 
 
-def inline_format(text: str) -> str:
-    """处理行内格式：加粗、行内代码、链接。"""
-    # 行内代码
-    text = re.sub(
-        r'`([^`]+)`',
-        lambda m: (
-            f'<code style="background: #f6f8fa; padding: 2px 6px; '
-            f'border-radius: 3px; font-size: 13px; '
-            f'font-family: Consolas, Monaco, monospace; '
-            f'color: #d6336c;">{escape_html(m.group(1))}</code>'
-        ),
-        text
-    )
-    # 加粗
-    text = re.sub(
-        r'\*\*([^*]+)\*\*',
-        lambda m: f'<strong style="font-weight: bold; color: #1a1a1a;">{m.group(1)}</strong>',
-        text
-    )
-    # 斜体
-    text = re.sub(
-        r'(?<!\*)\*([^*]+)\*(?!\*)',
-        lambda m: f'<em>{m.group(1)}</em>',
-        text
-    )
-    # 链接
-    text = re.sub(
-        r'\[([^\]]+)\]\(([^)]+)\)',
-        lambda m: (
-            f'<a href="{escape_html(m.group(2))}" '
-            f'style="color: {primary_color}; text-decoration: none;">{m.group(1)}</a>'
-        ),
-        text
-    )
-    return text
+
 
 
 def escape_html(text: str) -> str:
