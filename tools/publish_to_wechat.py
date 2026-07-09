@@ -70,8 +70,7 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
             break
     lines = body_lines[:cutoff]
     html_parts = []
-    in_list = False
-    list_type = None
+    ol_counter = [0]  # 用列表包装，方便嵌套函数修改
 
     def inline_format(text: str) -> str:
         """处理行内格式：加粗、行内代码、链接。捕获外层 primary_color。"""
@@ -115,18 +114,11 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
 
         # 空行
         if not line.strip():
-            if in_list:
-                html_parts.append(f'</{list_type}>')
-                in_list = False
-                list_type = None
             i += 1
             continue
 
         # 二级标题
         if line.startswith('## '):
-            if in_list:
-                html_parts.append(f'</{list_type}>')
-                in_list = False
             text = line[3:].strip()
             html_parts.append(
                 f'<h2 style="font-size: 19px; font-weight: bold; '
@@ -140,9 +132,6 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
 
         # 三级标题
         if line.startswith('### '):
-            if in_list:
-                html_parts.append(f'</{list_type}>')
-                in_list = False
             text = line[4:].strip()
             html_parts.append(
                 f'<h3 style="font-size: 16px; font-weight: bold; '
@@ -156,9 +145,6 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
 
         # 引用块
         if line.startswith('> '):
-            if in_list:
-                html_parts.append(f'</{list_type}>')
-                in_list = False
             quote_lines = []
             while i < len(lines) and lines[i].startswith('> '):
                 quote_lines.append(inline_format(lines[i][2:].strip()))
@@ -176,54 +162,39 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
             )
             continue
 
-        # 无序列表
+        # 无序列表 — 用 p 标签模拟，bullet 用 Unicode ● 字符，避开微信对 ul/li 的默认样式覆盖
         if re.match(r'^[-*+] ', line):
-            if not in_list or list_type != 'ul':
-                if in_list:
-                    html_parts.append(f'</{list_type}>')
-                html_parts.append(
-                    '<ul style="margin: 14px 0; padding-left: 8px; '
-                    'font-size: 15px; line-height: 1.9; list-style: none;">'
-                )
-                in_list = True
-                list_type = 'ul'
+            ol_counter[0] = 0  # 切换到无序时重置有序计数
             text = re.sub(r'^[-*+] ', '', line).strip()
             html_parts.append(
-                f'<li style="margin-bottom: 8px; padding-left: 20px; position: relative; '
-                f'color: #333;">'
-                f'<span style="position: absolute; left: 0; top: 0.55em; '
-                f'width: 7px; height: 7px; border-radius: 50%; '
-                f'background: {primary_color}; display: inline-block;"></span>'
-                f'{inline_format(text)}</li>'
+                f'<p style="font-size: 15px; line-height: 1.9; margin: 0 0 8px 0; '
+                f'color: #333; padding-left: 1.2em; text-indent: -1.2em;">'
+                f'<span style="color: {primary_color}; font-size: 13px; '
+                f'margin-right: 6px;">●</span>'
+                f'{inline_format(text)}</p>'
             )
             i += 1
             continue
 
-        # 有序列表
-        if re.match(r'^\d+\. ', line):
-            if not in_list or list_type != 'ol':
-                if in_list:
-                    html_parts.append(f'</{list_type}>')
-                html_parts.append(
-                    '<ol style="margin: 14px 0; padding-left: 24px; '
-                    'font-size: 15px; line-height: 1.9; '
-                    'counter-reset: ol-counter; list-style: none;">'
-                )
-                in_list = True
-                list_type = 'ol'
+        # 有序列表 — 用 p 标签模拟，手动拼序号，避开微信对 ol/li 的默认样式覆盖
+        ol_match = re.match(r'^(\d+)\. ', line)
+        if ol_match:
+            ol_counter[0] += 1
             text = re.sub(r'^\d+\. ', '', line).strip()
             html_parts.append(
-                f'<li style="margin-bottom: 10px; padding-left: 8px; '
-                f'color: #333;">{inline_format(text)}</li>'
+                f'<p style="font-size: 15px; line-height: 1.9; margin: 0 0 10px 0; '
+                f'color: #333; padding-left: 1.8em; text-indent: -1.8em;">'
+                f'<span style="color: {primary_color}; font-weight: bold; '
+                f'margin-right: 6px;">{ol_counter[0]}.</span>'
+                f'{inline_format(text)}</p>'
             )
             i += 1
             continue
+        else:
+            ol_counter[0] = 0  # 非列表行重置有序计数
 
         # 代码块
         if line.startswith('```'):
-            if in_list:
-                html_parts.append(f'</{list_type}>')
-                in_list = False
             code_lines = []
             i += 1
             while i < len(lines) and not lines[i].startswith('```'):
@@ -245,48 +216,33 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
         # 图片
         img_match = re.match(r'!\[([^\]]*)\]\(([^)]+)\)', line.strip())
         if img_match:
-            if in_list:
-                html_parts.append(f'</{list_type}>')
-                in_list = False
             alt = img_match.group(1)
             src = img_match.group(2)
             html_parts.append(
-                f'<figure style="margin: 24px 0; text-align: center;">'
+                f'<p style="margin: 24px 0; text-align: center;">'
                 f'<img src="{escape_html(src)}" alt="{escape_html(alt)}" '
                 f'style="max-width: 100%; height: auto; '
                 f'border-radius: 10px; display: block; margin: 0 auto; '
                 f'box-shadow: 0 4px 16px rgba(0,0,0,0.10);" />'
-                f'<figcaption style="margin-top: 8px; font-size: 12px; '
-                f'color: #999; line-height: 1.6;">{escape_html(alt)}</figcaption>'
-                f'</figure>'
+                f'</p>'
+                f'<p style="margin: 4px 0 20px; text-align: center; font-size: 12px; '
+                f'color: #999; line-height: 1.6;">{escape_html(alt)}</p>'
             )
             i += 1
             continue
 
-        # 分隔线
+        # 分隔线 — Unicode 字符装饰，微信完全兼容，有设计感
         if line.strip() in ('---', '***', '___'):
-            if in_list:
-                html_parts.append(f'</{list_type}>')
-                in_list = False
             html_parts.append(
-                '<div style="margin: 28px auto; text-align: center; line-height: 0;">'
-                '<span style="display: inline-block; width: 32px; height: 2px; '
-                'background: #F4845F; border-radius: 2px; margin: 0 4px;"></span>'
-                '<span style="display: inline-block; width: 8px; height: 8px; '
-                'border-radius: 50%; background: #F4845F; margin: 0 4px; vertical-align: middle;"></span>'
-                '<span style="display: inline-block; width: 32px; height: 2px; '
-                'background: #F4845F; border-radius: 2px; margin: 0 4px;"></span>'
-                '</div>'
+                f'<p style="text-align: center; margin: 36px 0; '
+                f'font-size: 16px; letter-spacing: 4px; '
+                f'color: {primary_color}; line-height: 1; '
+                f'font-weight: normal;">────◆────</p>'
             )
             i += 1
             continue
 
         # 普通段落
-        if in_list:
-            html_parts.append(f'</{list_type}>')
-            in_list = False
-            list_type = None
-
         para_lines = [line]
         i += 1
         while i < len(lines) and lines[i].strip() and not is_block_start(lines[i]):
@@ -299,9 +255,6 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
             f'margin: 0 0 20px 0; color: #333; '
             f'text-align: justify; letter-spacing: 0.01em;">{inline_format(para_text)}</p>'
         )
-
-    if in_list:
-        html_parts.append(f'</{list_type}>')
 
     return '\n'.join(html_parts)
 
@@ -802,10 +755,225 @@ def main():
             print(f"[ERROR] 文件不存在：{args.markdown}", file=sys.stderr)
             sys.exit(1)
         md_text = md_path.read_text(encoding='utf-8')
-        html = md_to_wechat_html(md_text, primary_color=primary_color)
+        article_html = md_to_wechat_html(md_text, primary_color=primary_color)
+        title, _ = extract_title_and_body(md_text)
+
+        # 构建完整预览页面（左侧预览 + 右侧复制按钮）
+        # article_html 是纯正文片段，用 JSON 序列化安全地嵌入 JS 字符串
+        article_html_json = json.dumps(article_html, ensure_ascii=False)
+
+        full_page = f"""<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>{title} — 微信公众号预览</title>
+<style>
+  *, *::before, *::after {{ box-sizing: border-box; }}
+  body {{
+    margin: 0; padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    background: #f0f2f5;
+    display: flex;
+    min-height: 100vh;
+  }}
+  /* ── 左侧预览 ── */
+  #preview-wrap {{
+    flex: 1;
+    overflow-y: auto;
+    padding: 40px 24px;
+    display: flex;
+    justify-content: center;
+  }}
+  #preview {{
+    background: #fff;
+    width: 100%;
+    max-width: 680px;
+    min-height: 100vh;
+    padding: 40px 32px 60px;
+    border-radius: 12px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.08);
+  }}
+  /* ── 右侧操作面板 ── */
+  #sidebar {{
+    width: 220px;
+    flex-shrink: 0;
+    padding: 40px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+  }}
+  #sidebar h2 {{
+    font-size: 13px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 0;
+  }}
+  #copy-btn {{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 14px 0;
+    background: #F4845F;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background .15s, transform .1s, box-shadow .15s;
+    box-shadow: 0 4px 12px rgba(244,132,95,.35);
+  }}
+  #copy-btn:hover {{ background: #e06d48; box-shadow: 0 6px 16px rgba(244,132,95,.45); }}
+  #copy-btn:active {{ transform: scale(.97); }}
+  #copy-btn.success {{ background: #34c759; box-shadow: 0 4px 12px rgba(52,199,89,.35); }}
+  #copy-btn svg {{ width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }}
+  #status {{
+    font-size: 12.5px;
+    color: #555;
+    line-height: 1.7;
+    background: #fff;
+    border-radius: 8px;
+    padding: 12px 14px;
+    border: 1px solid #e8e8e8;
+  }}
+  #status strong {{ color: #F4845F; }}
+  .step {{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 12.5px;
+    color: #555;
+    line-height: 1.6;
+  }}
+  .step-num {{
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    background: #F4845F;
+    color: #fff;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }}
+  #err {{
+    font-size: 12px;
+    color: #e74c3c;
+    display: none;
+    background: #fff5f5;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 10px 12px;
+    line-height: 1.6;
+  }}
+</style>
+</head>
+<body>
+
+<!-- 左侧文章预览 -->
+<div id="preview-wrap">
+  <div id="preview">
+    {article_html}
+  </div>
+</div>
+
+<!-- 右侧操作面板 -->
+<div id="sidebar">
+  <h2>操作</h2>
+
+  <button id="copy-btn" onclick="copyArticle()">
+    <svg viewBox="0 0 24 24"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+    一键复制正文
+  </button>
+
+  <div id="err"></div>
+
+  <div id="status">
+    复制后打开微信公众号编辑器，<strong>直接 ⌘V 粘贴</strong>，样式完整保留。
+  </div>
+
+  <div class="step">
+    <span class="step-num">1</span>
+    <span>点击上方「一键复制正文」</span>
+  </div>
+  <div class="step">
+    <span class="step-num">2</span>
+    <span>打开公众号编辑器，点击正文区域</span>
+  </div>
+  <div class="step">
+    <span class="step-num">3</span>
+    <span>⌘V 粘贴，样式自动还原</span>
+  </div>
+  <div class="step">
+    <span class="step-num">4</span>
+    <span>封面图在公众号后台单独上传</span>
+  </div>
+</div>
+
+<script>
+// 正文 HTML（只含文章内容，不含预览页框架）
+const ARTICLE_HTML = {article_html_json};
+
+async function copyArticle() {{
+  const btn = document.getElementById('copy-btn');
+  const err = document.getElementById('err');
+  err.style.display = 'none';
+
+  try {{
+    // 优先用 ClipboardItem API（以 text/html 写剪贴板，粘贴后保留样式）
+    if (navigator.clipboard && window.ClipboardItem) {{
+      const blob = new Blob([ARTICLE_HTML], {{ type: 'text/html' }});
+      await navigator.clipboard.write([new ClipboardItem({{ 'text/html': blob }})]);
+    }} else {{
+      // 降级：用隐藏 div + execCommand（兼容旧浏览器）
+      const div = document.createElement('div');
+      div.innerHTML = ARTICLE_HTML;
+      div.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0;';
+      document.body.appendChild(div);
+      const sel = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(div);
+      sel.removeAllRanges();
+      sel.addRange(range);
+      document.execCommand('copy');
+      sel.removeAllRanges();
+      document.body.removeChild(div);
+    }}
+
+    // 成功反馈
+    btn.classList.add('success');
+    btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg> 已复制！去粘贴吧';
+    setTimeout(() => {{
+      btn.classList.remove('success');
+      btn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M16 1H4C2.9 1 2 1.9 2 3v14h2V3h12V1zm3 4H8C6.9 5 6 5.9 6 7v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg> 一键复制正文';
+    }}, 3000);
+
+  }} catch (e) {{
+    err.textContent = '复制失败：' + e.message + '。请尝试在浏览器地址栏输入 file:// 路径直接打开此文件，或用 Chrome/Edge 打开。';
+    err.style.display = 'block';
+  }}
+}}
+</script>
+
+</body>
+</html>"""
+
         out_path = md_path.with_suffix('.html')
-        out_path.write_text(html, encoding='utf-8')
-        print(f"[OK] HTML 已生成：{out_path}")
+        out_path.write_text(full_page, encoding='utf-8')
+        print(f"[OK] HTML 预览页已生成：{out_path}")
+        print(f"[INFO] 用浏览器打开后，点击右侧「一键复制正文」，再粘贴到公众号编辑器即可。")
         return
 
     try:
