@@ -303,6 +303,7 @@ python3 /Users/lucas/Desktop/WeChat-Insight-Skill/tools/publish_to_wechat.py "<M
 
 - 用户选择否时，不执行命令，保留 Markdown 文件即可
 - 转换成功后，告知用户 HTML 文件的实际路径；脚本默认在 Markdown 文件同目录生成同名 `.html` 文件
+- 转换后的 HTML 只保留可发布正文，不包含“使用假设”和“摘要”；Markdown 源文件仍保留完整交付内容
 - 转换失败时，返回原始错误并说明阻塞原因，不得声称 HTML 已生成
 - 新建完整文章和修改后重新交付完整 Markdown 文章时，都执行本询问；只输出提纲、标题或修改建议时不询问
 

@@ -61,7 +61,7 @@ python tools/publish_to_wechat.py article.md --html-only
 python3 /Users/lucas/Desktop/WeChat-Insight-Skill/tools/publish_to_wechat.py "<Markdown 文件绝对路径>" --html-only
 ```
 
-用户拒绝或尚未确认时不执行。转换成功后，脚本会在 Markdown 文件同目录生成同名 `.html` 文件；向用户返回该文件的实际路径。转换失败时返回原始错误，不得声称文件已生成。
+用户拒绝或尚未确认时不执行。转换成功后，脚本会在 Markdown 文件同目录生成同名 `.html` 文件；向用户返回该文件的实际路径。HTML 只保留可发布正文，不包含 Markdown 交付包中的“使用假设”和“摘要”；Markdown 源文件保持不变。转换失败时返回原始错误，不得声称文件已生成。
 
 ### 方式二：通过环境变量注入凭证（推荐）
 
@@ -116,6 +116,7 @@ python tools/publish_to_wechat.py article.md
 发布工具自动将 Markdown 转换为公众号编辑器兼容的 HTML，特点：
 
 - 使用 inline 样式，不依赖外部 CSS，粘贴/上传后样式不丢失
+- 自动过滤“使用假设”和“摘要”，不把写作参数及后台摘要混入公众号正文
 - 字体大小、行高、间距按移动端阅读优化
 - 主色调使用配置文件中的品牌色（默认暖橙 `#F4845F`）
 - 代码块有背景色和圆角

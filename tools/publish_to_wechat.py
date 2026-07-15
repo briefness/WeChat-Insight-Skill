@@ -46,6 +46,38 @@ def extract_title_and_body(md_text: str):
     return title, body
 
 
+def strip_delivery_metadata(body: str) -> str:
+    """移除 Skill 交付信息，仅保留可发布正文所需的 Markdown。"""
+    lines = body.split('\n')
+    filtered = []
+    i = 0
+
+    while i < len(lines):
+        stripped = lines[i].strip()
+        heading_match = re.fullmatch(r'##\s+(.+?)\s*', stripped)
+        heading = heading_match.group(1).strip('*` ').rstrip('：:') if heading_match else ''
+
+        if heading in ('使用假设', '摘要'):
+            i += 1
+            while i < len(lines) and not re.match(r'^##\s+', lines[i].strip()):
+                i += 1
+            continue
+
+        if re.match(r'^>\s*(?:\*\*)?使用假设(?:\*\*)?\s*[：:]?', stripped):
+            while i < len(lines) and lines[i].strip().startswith('>'):
+                i += 1
+            continue
+
+        if re.match(r'^(?:\*\*)?使用假设(?:\*\*)?\s*[：:]', stripped):
+            i += 1
+            continue
+
+        filtered.append(lines[i])
+        i += 1
+
+    return '\n'.join(filtered).strip()
+
+
 def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
     """
     将 Markdown 转换为公众号编辑器兼容的 HTML。
@@ -56,6 +88,7 @@ def md_to_wechat_html(md_text: str, primary_color: str = '#F4845F') -> str:
         primary_color: 品牌主色，用于引用块左边框和链接颜色，默认暖橙 #F4845F
     """
     _, body = extract_title_and_body(md_text)
+    body = strip_delivery_metadata(body)
 
     # 截掉元信息区块：转发文案、发布前检查不输出到公众号正文
     _STRIP_SECTIONS = ('## 转发文案', '## 发布前检查')
