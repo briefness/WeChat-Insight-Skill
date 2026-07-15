@@ -51,6 +51,18 @@ python tools/publish_to_wechat.py article.md --config ~/.config/wechat-writer/co
 python tools/publish_to_wechat.py article.md --html-only
 ```
 
+### 完稿后按需转换 HTML
+
+生成完整文章并保存为 Markdown 文件后，必须先询问用户：`Markdown 文章已生成，是否需要转换为 HTML？`
+
+只有用户明确选择“是”后，才执行以下命令，并把参数替换为实际 Markdown 文件绝对路径：
+
+```bash
+python3 /Users/lucas/Desktop/WeChat-Insight-Skill/tools/publish_to_wechat.py "<Markdown 文件绝对路径>" --html-only
+```
+
+用户拒绝或尚未确认时不执行。转换成功后，脚本会在 Markdown 文件同目录生成同名 `.html` 文件；向用户返回该文件的实际路径。转换失败时返回原始错误，不得声称文件已生成。
+
 ### 方式二：通过环境变量注入凭证（推荐）
 
 ```bash
