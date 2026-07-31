@@ -1,6 +1,9 @@
 import importlib.util
+import os
+import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 
 MODULE_PATH = Path(__file__).parents[1] / "tools" / "publish_to_wechat.py"
@@ -65,6 +68,32 @@ class MarkdownToWechatHtmlTests(unittest.TestCase):
 
         self.assertNotIn("这段假设不应出现", html)
         self.assertIn("正文需要保留", html)
+
+
+class PublishDefaultsTests(unittest.TestCase):
+    def publish_and_get_article(self, config):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            article_path = Path(tmp_dir) / "article.md"
+            article_path.write_text("# 示例标题\n\n## 正文\n\n正文内容。\n", encoding="utf-8")
+            api = MagicMock()
+            api.create_draft.return_value = "media-id"
+
+            with patch.object(publish_to_wechat, "WechatAPI", return_value=api), \
+                 patch.object(publish_to_wechat, "append_history"), \
+                 patch.dict(os.environ, {"WECHAT_APP_ID": "app-id", "WECHAT_APP_SECRET": "secret"}):
+                publish_to_wechat.publish_article(str(article_path), config=config)
+
+            return api.create_draft.call_args.args[0][0]
+
+    def test_comments_are_open_by_default(self):
+        article = self.publish_and_get_article({})
+
+        self.assertEqual(1, article["need_open_comment"])
+
+    def test_explicit_comment_setting_is_respected(self):
+        article = self.publish_and_get_article({"wechat": {"need_open_comment": False}})
+
+        self.assertEqual(0, article["need_open_comment"])
 
 
 if __name__ == "__main__":

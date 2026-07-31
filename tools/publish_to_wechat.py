@@ -737,7 +737,7 @@ def publish_article(
         'digest': digest,
         'content': html_content,
         'thumb_media_id': thumb_media_id,
-        'need_open_comment': int(wechat_cfg.get('need_open_comment', 0)),
+        'need_open_comment': int(wechat_cfg.get('need_open_comment', 1)),
         'only_fans_can_comment': int(wechat_cfg.get('only_fans_can_comment', 0)),
         'content_source_url': '',
     }

@@ -1,6 +1,6 @@
 # 用户个性化配置
 
-本 Skill 支持通过本地配置文件持久化用户偏好，避免每次使用都重复指定作者调性、品牌色、公众号凭证等信息。
+本 Skill 支持通过本地配置文件持久化用户偏好，避免每次使用都重复指定账号定位、作者调性、品牌色、公众号凭证等信息。
 
 ## 配置文件位置
 
@@ -24,6 +24,17 @@
 | `tone` | string | `"indie-dev"` | 默认作者调性：`indie-dev` / `hardcore-tech` / `promo` |
 | `fixed_cta` | string | `""` | 固定 CTA 文案，有需要时覆盖自动生成的 CTA |
 
+### positioning — 账号定位
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `primary_audience` | string | `""` | 账号长期服务的具体读者；比“泛技术爱好者”更具体 |
+| `content_pillars` | string[] | `[]` | 稳定内容栏目，用于判断选题是否偏离账号定位 |
+| `reader_problems` | string[] | `[]` | 目标读者反复遇到的问题，用于确定点击理由和核心收益 |
+| `avoid_topics` | string[] | `[]` | 明确不做或已验证不适合账号的主题 |
+
+生成文章时优先使用这里的长期定位，再结合用户本次要求确定具体读者。配置为空时从用户素材和历史文章推断，不为了填配置而中断写作。
+
 ### wechat — 公众号发布
 
 | 字段 | 类型 | 默认值 | 说明 |
@@ -32,7 +43,7 @@
 | `app_secret` | string | `""` | 微信公众号 AppSecret（发布到草稿箱时必需，**严禁提交到公开仓库**） |
 | `default_author` | string | `""` | 草稿的默认作者名 |
 | `default_digest_source` | string | `"first_paragraph"` | 摘要来源：`first_paragraph` / `manual` |
-| `need_open_comment` | boolean | `false` | 是否打开评论 |
+| `need_open_comment` | boolean | `true` | 是否打开评论；默认核心目标包含互动，因此默认开启 |
 | `only_fans_can_comment` | boolean | `false` | 是否仅粉丝可评论 |
 
 **安全提醒：** `app_secret` 是敏感凭证。建议通过环境变量 `WECHAT_APP_SECRET` 注入，不要明文写在配置文件里。如果写在配置文件中，确保配置文件已加入 `.gitignore`。
@@ -41,20 +52,35 @@
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `primary_color` | string | `"#F4845F"` | 主强调色（十六进制） |
-| `secondary_color` | string | `"#FDE68A"` | 辅助色（十六进制） |
-| `cover_style` | string | `"indie-dev"` | 封面默认风格：`indie-dev` / `promo` / `hardcore-tech` |
-| `use_orange_cat_ip` | boolean | `true` | 是否启用橘猫 IP |
+| `primary_color` | string | `"#F4845F"` | 正文图片和 HTML 的主强调色（十六进制）；封面仅在用户明确要求品牌统一时使用 |
+| `secondary_color` | string | `"#FDE68A"` | 正文图片的辅助色（十六进制）；封面默认不继承 |
+| `cover_style` | string | `"editorial"` | 内容无法明确路由时的封面兜底风格：`editorial` / `result-led` / `technical` |
+| `use_orange_cat_ip` | boolean | `true` | 是否在正文图片中启用橘猫 IP；不影响封面，封面始终禁用固定 IP |
 
 ### output — 输出偏好
 
 | 字段 | 类型 | 默认值 | 说明 |
 |------|------|--------|------|
-| `title_count` | number | `5` | 备选标题数量（3-7） |
+| `title_count` | number | `3` | 备选标题数量（3-5），默认覆盖明确收益、认知冲突和身份共鸣三种传播假设 |
 | `digest_min_length` | number | `40` | 摘要最小字数 |
 | `digest_max_length` | number | `80` | 摘要最大字数 |
 | `forward_copy_count` | number | `2` | 转发文案数量（1-3） |
 | `image_mode` | string | `"auto"` | 配图模式：`auto` / `full` / `text-only` |
+
+### performance — 发布表现
+
+| 字段 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `history_file` | string | `"~/.local/share/wechat-writer/performance.jsonl"` | 手工记录文章表现的 JSONL 文件；路径中的 `~` 按用户主目录解析 |
+| `lookback_count` | number | `10` | 生成前最多参考多少条最近的同栏目记录 |
+
+表现文件每行一个 JSON 对象。除最终标题和传播假设外，记录标题的具体主钩子、目标读者和分发条件，避免把不可比文章混在一起。指标只填写公众号后台实际可见的数据；没有的指标保留 `null`，不要估算：
+
+```json
+{"account":"示例账号","article_type":"项目复盘","content_pillar":"AI 编程实战","audience":"使用 AI 工具的独立开发者","title":"AI 没让流程更简单，它只是把难点换到了验证","title_angle":"认知冲突","title_hook":"效率直觉与验证成本的冲突","published_at":"2026-07-27","distribution_context":"常规发布，无额外社群分发","metrics":{"impressions":null,"reads":null,"average_read_time":null,"shares":null,"favorites":null,"likes":null,"comments":null,"new_followers":null},"notes":"首屏反馈较好，转发较少"}
+```
+
+字段名称可以随公众号后台实际提供的指标调整。只有后台实际提供 `impressions` 时才填写并比较同口径点击表现；只有阅读量时，不把差异单独归因给标题。Skill 只比较同一账号、同一口径、相近主题且分发条件相近的记录，不把单篇波动当成稳定结论。详细读取和使用规则见 `recommendation-loop.md`。
 
 ## 配置优先级
 
