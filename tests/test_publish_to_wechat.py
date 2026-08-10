@@ -114,6 +114,25 @@ class DigestExtractionTests(unittest.TestCase):
 
         self.assertEqual("这是正文第一段。", digest)
 
+    def test_can_explicitly_use_first_body_paragraph(self):
+        markdown = """# 示例标题
+
+## 摘要
+
+这是摘要区块。
+
+## 正文
+
+这是正文第一段。
+"""
+
+        digest = publish_to_wechat.extract_digest(
+            markdown,
+            source="first_paragraph"
+        )
+
+        self.assertEqual("这是正文第一段。", digest)
+
 
 class PublishDefaultsTests(unittest.TestCase):
     def publish_and_get_article(self, config):
@@ -139,6 +158,22 @@ class PublishDefaultsTests(unittest.TestCase):
         article = self.publish_and_get_article({"wechat": {"need_open_comment": False}})
 
         self.assertEqual(0, article["need_open_comment"])
+
+    def test_manual_digest_source_requires_digest_argument(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            article_path = Path(tmp_dir) / "article.md"
+            article_path.write_text("# 示例标题\n\n## 正文\n\n正文内容。\n", encoding="utf-8")
+            api = MagicMock()
+
+            with patch.object(publish_to_wechat, "WechatAPI", return_value=api), \
+                 patch.dict(os.environ, {"WECHAT_APP_ID": "app-id", "WECHAT_APP_SECRET": "secret"}):
+                with self.assertRaisesRegex(ValueError, "必须通过 --digest 提供摘要"):
+                    publish_to_wechat.publish_article(
+                        str(article_path),
+                        config={"wechat": {"default_digest_source": "manual"}},
+                    )
+
+            api.create_draft.assert_not_called()
 
 
 if __name__ == "__main__":

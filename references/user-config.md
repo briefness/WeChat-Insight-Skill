@@ -42,7 +42,7 @@
 | `app_id` | string | `""` | 微信公众号 AppID（发布到草稿箱时必需） |
 | `app_secret` | string | `""` | 微信公众号 AppSecret（发布到草稿箱时必需，**严禁提交到公开仓库**） |
 | `default_author` | string | `""` | 草稿的默认作者名 |
-| `default_digest_source` | string | `"first_paragraph"` | 摘要来源：`first_paragraph` / `manual` |
+| `default_digest_source` | string | `"summary_section"` | 摘要来源：`summary_section` / `first_paragraph` / `manual`；手动模式必须传入 `--digest` |
 | `need_open_comment` | boolean | `true` | 是否打开评论；默认核心目标包含互动，因此默认开启 |
 | `only_fans_can_comment` | boolean | `false` | 是否仅粉丝可评论 |
 

@@ -179,7 +179,7 @@ cp config.example.json .wechat-writer-config.json
 |------|------|------|
 | 作者 | `name`, `bio`, `signature`, `tone`, `fixed_cta` | 作者信息、签名、默认调性和固定 CTA |
 | 定位 | `primary_audience`, `content_pillars`, `reader_problems`, `avoid_topics` | 账号长期读者、栏目和选题边界 |
-| 公众号 | `app_id`, `app_secret`, `default_author`, `need_open_comment`, `only_fans_can_comment` | 发布凭证、默认作者和评论设置 |
+| 公众号 | `app_id`, `app_secret`, `default_author`, `default_digest_source`, `need_open_comment`, `only_fans_can_comment` | 发布凭证、默认作者、摘要来源和评论设置 |
 | 品牌 | `primary_color`, `secondary_color`, `cover_style`, `use_orange_cat_ip` | 正文色板、封面兜底方向和正文 IP 设置 |
 | 输出 | `title_count`, `digest_min_length`, `digest_max_length`, `forward_copy_count`, `image_mode` | 标题、摘要、转发文案和图片模式 |
 | 表现 | `history_file`, `lookback_count` | 历史表现文件和回看数量 |
@@ -232,7 +232,7 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 ~/.local/share/wechat-writer/history.jsonl
 ```
 
-未传入 `--digest` 时，脚本优先使用交付稿中的“摘要”区块；没有该区块时才从正文首段自动提取。
+未传入 `--digest` 时，脚本默认使用交付稿中的“摘要”区块；没有该区块时从正文首段自动提取。可以通过 `wechat.default_digest_source` 改为始终读取正文首段或要求手动传入摘要，最大长度由 `output.digest_max_length` 控制。
 
 标题及推荐表现由用户按公众号后台实际可见指标补充到：
 

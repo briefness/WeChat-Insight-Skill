@@ -570,7 +570,7 @@ def validate_config(config: dict) -> None:
         print("[WARN] 配置文件 wechat 节必须是对象（{}），当前格式有误", file=sys.stderr)
         return
 
-    str_fields = ['app_id', 'app_secret', 'default_author']
+    str_fields = ['app_id', 'app_secret', 'default_author', 'default_digest_source']
     for field in str_fields:
         val = wechat.get(field)
         if val is not None and not isinstance(val, str):
@@ -636,26 +636,31 @@ def mask_secret(secret: str) -> str:
     return secret[:4] + '****' + secret[-4:]
 
 
-def extract_digest(md_text: str, max_len: int = 120) -> str:
+def extract_digest(
+    md_text: str,
+    max_len: int = 120,
+    source: str = 'summary_section'
+) -> str:
     """优先读取“摘要”交付区块，缺失时回退到正文第一段。"""
     lines = md_text.strip().split('\n')
 
-    for index, line in enumerate(lines):
-        heading_match = re.fullmatch(r'##\s+(.+?)\s*', line.strip())
-        heading = heading_match.group(1).strip('*` ').rstrip('：:') if heading_match else ''
-        if heading != '摘要':
-            continue
+    if source == 'summary_section':
+        for index, line in enumerate(lines):
+            heading_match = re.fullmatch(r'##\s+(.+?)\s*', line.strip())
+            heading = heading_match.group(1).strip('*` ').rstrip('：:') if heading_match else ''
+            if heading != '摘要':
+                continue
 
-        summary_lines = []
-        for summary_line in lines[index + 1:]:
-            if re.match(r'^##\s+', summary_line.strip()):
-                break
-            stripped = summary_line.strip()
-            if stripped:
-                summary_lines.append(stripped)
-        summary = ''.join(summary_lines)
-        if summary:
-            return summary[:max_len]
+            summary_lines = []
+            for summary_line in lines[index + 1:]:
+                if re.match(r'^##\s+', summary_line.strip()):
+                    break
+                stripped = summary_line.strip()
+                if stripped:
+                    summary_lines.append(stripped)
+            summary = ''.join(summary_lines)
+            if summary:
+                return summary[:max_len]
 
     _, body = extract_title_and_body(md_text)
     lines = strip_delivery_metadata(body).split('\n')
@@ -703,6 +708,7 @@ def publish_article(
     config = config or {}
     wechat_cfg = config.get('wechat', {})
     brand_cfg = config.get('brand', {})
+    output_cfg = config.get('output', {})
 
     # 凭证：环境变量优先
     app_id = os.environ.get('WECHAT_APP_ID') or wechat_cfg.get('app_id', '')
@@ -752,7 +758,22 @@ def publish_article(
 
     # 摘要
     if not digest:
-        digest = extract_digest(md_text, 120)
+        digest_source = wechat_cfg.get('default_digest_source', 'summary_section')
+        if digest_source == 'manual':
+            raise ValueError(
+                "配置 wechat.default_digest_source 为 manual 时，必须通过 --digest 提供摘要"
+            )
+        if digest_source not in ('summary_section', 'first_paragraph'):
+            print(
+                f"[WARN] 未知的摘要来源 {digest_source!r}，回退到 summary_section",
+                file=sys.stderr
+            )
+            digest_source = 'summary_section'
+        digest_max_length = output_cfg.get('digest_max_length', 80)
+        if not isinstance(digest_max_length, int) or digest_max_length <= 0:
+            print("[WARN] output.digest_max_length 必须是正整数，回退到 80", file=sys.stderr)
+            digest_max_length = 80
+        digest = extract_digest(md_text, digest_max_length, digest_source)
 
     # 作者
     if not author:

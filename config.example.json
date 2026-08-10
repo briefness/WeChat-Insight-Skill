@@ -16,7 +16,7 @@
     "app_id": "",
     "app_secret": "",
     "default_author": "",
-    "default_digest_source": "first_paragraph",
+    "default_digest_source": "summary_section",
     "need_open_comment": true,
     "only_fans_can_comment": false
   },
