@@ -13,6 +13,7 @@
 - [环境要求](#环境要求)
 - [安装](#安装)
 - [快速开始](#快速开始)
+- [示例](#示例)
 - [输出格式](#输出格式)
 - [图片规则](#图片规则)
 - [配置](#配置)
@@ -58,6 +59,8 @@
 - 支持本地 Skills 的 Codex、Antigravity IDE 或兼容智能体环境
 - 联网检索能力，推荐启用；不可用时自动降级并标记时效性风险
 - 图片生成能力，可选；不可用时输出可执行的配图建议
+
+仓库以根目录中的 `SKILL.md` 和相对路径 `references/` 作为兼容结构。不同客户端的 Skills 目录、联网权限和图片工具可能不同；安装位置与能力授权以对应客户端当前文档为准。
 
 ### 使用发布脚本
 
@@ -111,6 +114,18 @@ git clone https://github.com/briefness/WeChat-Insight-Skill.git ~/.antigravity/s
 
 Skill 会优先自主获取可以从上下文、工作区和公开资料取得的信息。只有缺失内容会改变文章立场、核心事实或案例真实性时，才向用户追问最少量信息。
 
+## 示例
+
+[`examples/demo-article.md`](./examples/demo-article.md) 展示了一份完整交付稿，包含使用假设、3 个备选标题、摘要、正文、转发文案和发布前检查。
+
+可以直接验证 HTML 转换：
+
+```bash
+python3 tools/publish_to_wechat.py examples/demo-article.md --html-only
+```
+
+命令会生成 `examples/demo-article.html`。该 HTML 是带公众号正文预览和复制按钮的本地页面，不会修改 Markdown 源文件。
+
 ## 输出格式
 
 完整文章默认按以下顺序交付：
@@ -162,9 +177,9 @@ cp config.example.json .wechat-writer-config.json
 
 | 分类 | 字段 | 作用 |
 |------|------|------|
-| 作者 | `name`, `bio`, `tone`, `fixed_cta` | 作者信息、默认调性和固定 CTA |
+| 作者 | `name`, `bio`, `signature`, `tone`, `fixed_cta` | 作者信息、签名、默认调性和固定 CTA |
 | 定位 | `primary_audience`, `content_pillars`, `reader_problems`, `avoid_topics` | 账号长期读者、栏目和选题边界 |
-| 公众号 | `app_id`, `app_secret`, `default_author` | 发布凭证和默认作者 |
+| 公众号 | `app_id`, `app_secret`, `default_author`, `need_open_comment`, `only_fans_can_comment` | 发布凭证、默认作者和评论设置 |
 | 品牌 | `primary_color`, `secondary_color`, `cover_style`, `use_orange_cat_ip` | 正文色板、封面兜底方向和正文 IP 设置 |
 | 输出 | `title_count`, `digest_min_length`, `digest_max_length`, `forward_copy_count`, `image_mode` | 标题、摘要、转发文案和图片模式 |
 | 表现 | `history_file`, `lookback_count` | 历史表现文件和回看数量 |
@@ -187,7 +202,9 @@ Markdown 首行必须是一级标题：
 python3 tools/publish_to_wechat.py article.md --html-only
 ```
 
-脚本会在 Markdown 同目录生成同名 `.html` 文件，并自动过滤“使用假设”和“摘要”等交付元信息。
+脚本会在 Markdown 同目录生成同名 `.html` 预览页。转换时会移除“使用假设”“备选标题”“摘要”和“正文”包装标题，并截掉“转发文案”“发布前检查”及其后的交付信息，只保留可发布正文。
+
+转换器支持二级/三级标题、粗体、斜体、行内代码、代码块、引用、列表、图片、链接和分隔线。Markdown 表格及复杂 HTML 不受支持，应先改成列表、短段落或图片。
 
 ### 发布到草稿箱
 
@@ -209,11 +226,13 @@ python3 tools/publish_to_wechat.py article.md --author "作者名"
 python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 ```
 
-发布脚本会转换 Markdown、上传本地正文图片、上传封面、创建草稿并记录发布历史。成功记录保存在：
+发布脚本会转换 Markdown、上传本地正文图片、按需上传封面、创建草稿并记录发布历史。成功记录保存在：
 
 ```text
 ~/.local/share/wechat-writer/history.jsonl
 ```
+
+未传入 `--digest` 时，脚本优先使用交付稿中的“摘要”区块；没有该区块时才从正文首段自动提取。
 
 标题及推荐表现由用户按公众号后台实际可见指标补充到：
 
@@ -222,6 +241,13 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 ```
 
 详细前置条件、Markdown 支持范围和错误处理见 [`references/wechat-publish.md`](./references/wechat-publish.md)。
+
+当前发布边界：
+
+- 只创建公众号草稿，不会自动群发或正式发布。
+- 本地正文图片会上传并替换为微信 CDN URL；远程图片保留原 URL，不会自动转存。
+- 封面参数可省略，但草稿会使用空白封面，需要在公众号后台补充。
+- 每次只发布一篇文章，不支持批量发布。
 
 ## 安全
 
@@ -242,6 +268,9 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 | [`references/wechat-layout.md`](./references/wechat-layout.md) | 公众号移动端排版规则 |
 | [`references/cover-image.md`](./references/cover-image.md) | 内容驱动的封面生成与检查规则 |
 | [`references/design-system.md`](./references/design-system.md) | 正文图片的视觉系统 |
+| [`references/cartoon-illustrations.md`](./references/cartoon-illustrations.md) | 正文叙事插图和橘猫角色规则 |
+| [`references/flowchart-style.md`](./references/flowchart-style.md) | 流程、架构、原理和对比图规则 |
+| [`references/iteration-mode.md`](./references/iteration-mode.md) | 多轮修改和一致性回扫规则 |
 | [`references/wechat-publish.md`](./references/wechat-publish.md) | HTML 转换和公众号发布规则 |
 | [`tools/publish_to_wechat.py`](./tools/publish_to_wechat.py) | 无第三方依赖的 Markdown 转换与发布脚本 |
 | [`tests/test_publish_to_wechat.py`](./tests/test_publish_to_wechat.py) | 发布脚本回归测试 |
@@ -274,7 +303,7 @@ python3 tools/publish_to_wechat.py --help
 
 ## 贡献
 
-欢迎通过 Issue 报告问题或提出改进建议，也欢迎提交 Pull Request。提交前请：
+欢迎通过 [Issue](https://github.com/briefness/WeChat-Insight-Skill/issues) 报告问题或提出改进建议，也欢迎提交 [Pull Request](https://github.com/briefness/WeChat-Insight-Skill/pulls)。提交前请：
 
 1. 保持改动聚焦，不顺带重写无关规则。
 2. 更新与行为变化直接相关的文档。

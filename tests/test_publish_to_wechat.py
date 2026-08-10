@@ -20,9 +20,9 @@ class MarkdownToWechatHtmlTests(unittest.TestCase):
 >
 > 这段也是使用假设的补充说明。
 
-## 备选标题
+## 备选标题（3 个）
 
-1. 示例标题
+1. 不应出现在 HTML 中的备选标题
 
 ## 摘要
 
@@ -45,8 +45,11 @@ class MarkdownToWechatHtmlTests(unittest.TestCase):
 
         self.assertNotIn("项目复盘", html)
         self.assertNotIn("使用假设的补充说明", html)
+        self.assertNotIn("不应出现在 HTML 中的备选标题", html)
+        self.assertNotIn("备选标题（3 个）", html)
         self.assertNotIn("这段摘要不应出现在", html)
         self.assertNotIn(">摘要<", html)
+        self.assertNotIn(">正文</h2>", html)
         self.assertIn("这是需要保留的正文", html)
         self.assertIn("正文里的使用假设讨论", html)
         self.assertIn("这里正常讨论使用假设", html)
@@ -68,6 +71,48 @@ class MarkdownToWechatHtmlTests(unittest.TestCase):
 
         self.assertNotIn("这段假设不应出现", html)
         self.assertIn("正文需要保留", html)
+
+
+class DigestExtractionTests(unittest.TestCase):
+    def test_prefers_explicit_summary_over_delivery_metadata(self):
+        markdown = """# 示例标题
+
+> **使用假设**：项目复盘。
+>
+> 使用假设的补充文字。
+
+## 备选标题（3 个）
+
+1. 第一个备选标题
+
+## 摘要
+
+这是应该进入公众号后台的摘要。
+
+## 正文
+
+这是正文第一段。
+"""
+
+        digest = publish_to_wechat.extract_digest(markdown)
+
+        self.assertEqual("这是应该进入公众号后台的摘要。", digest)
+
+    def test_falls_back_to_first_body_paragraph(self):
+        markdown = """# 示例标题
+
+> **使用假设**：项目复盘。
+
+## 正文
+
+这是正文第一段。
+
+这是正文第二段。
+"""
+
+        digest = publish_to_wechat.extract_digest(markdown)
+
+        self.assertEqual("这是正文第一段。", digest)
 
 
 class PublishDefaultsTests(unittest.TestCase):

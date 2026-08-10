@@ -57,10 +57,19 @@ def strip_delivery_metadata(body: str) -> str:
         heading_match = re.fullmatch(r'##\s+(.+?)\s*', stripped)
         heading = heading_match.group(1).strip('*` ').rstrip('：:') if heading_match else ''
 
-        if heading in ('使用假设', '摘要'):
+        is_delivery_section = (
+            heading in ('使用假设', '摘要')
+            or heading.startswith('备选标题')
+        )
+        if is_delivery_section:
             i += 1
             while i < len(lines) and not re.match(r'^##\s+', lines[i].strip()):
                 i += 1
+            continue
+
+        # “正文”只是交付包的包装标题，不应出现在公众号正文中。
+        if heading == '正文':
+            i += 1
             continue
 
         if re.match(r'^>\s*(?:\*\*)?使用假设(?:\*\*)?\s*[：:]?', stripped):
@@ -628,25 +637,44 @@ def mask_secret(secret: str) -> str:
 
 
 def extract_digest(md_text: str, max_len: int = 120) -> str:
-    """从正文提取摘要：取第一段非标题、非空行的文本。
-
-    过滤策略：
-    - 跳过标题行（# 开头）
-    - 加粗开头的引用块（> ** 开头）是 Skill 元信息标签，整行跳过
-    - 普通引用块去掉 > 前缀后纳入候选
-    """
+    """优先读取“摘要”交付区块，缺失时回退到正文第一段。"""
     lines = md_text.strip().split('\n')
+
+    for index, line in enumerate(lines):
+        heading_match = re.fullmatch(r'##\s+(.+?)\s*', line.strip())
+        heading = heading_match.group(1).strip('*` ').rstrip('：:') if heading_match else ''
+        if heading != '摘要':
+            continue
+
+        summary_lines = []
+        for summary_line in lines[index + 1:]:
+            if re.match(r'^##\s+', summary_line.strip()):
+                break
+            stripped = summary_line.strip()
+            if stripped:
+                summary_lines.append(stripped)
+        summary = ''.join(summary_lines)
+        if summary:
+            return summary[:max_len]
+
+    _, body = extract_title_and_body(md_text)
+    lines = strip_delivery_metadata(body).split('\n')
     content_lines = []
     for line in lines:
         stripped = line.strip()
         if not stripped:
+            if content_lines:
+                break
             continue
         if stripped.startswith('#'):
             continue
+        if stripped in ('---', '***', '___'):
+            continue
+        if re.match(r'^!\[[^]]*\]\([^)]+\)$', stripped):
+            continue
         if stripped.startswith('> '):
             inner = stripped[2:].strip()
-            # 加粗开头的引用块是 Skill 元信息（如「使用假设」「输出格式」），跳过
-            if inner.startswith('**'):
+            if inner.startswith('【配图建议'):
                 continue
             stripped = inner
         if not stripped:
