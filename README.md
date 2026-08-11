@@ -1,6 +1,6 @@
 # WeChat Insight Skill
 
-面向 Codex、Antigravity IDE 及其他兼容本地 Skills 的智能体环境，将主题、项目资料、技术文档和博客整理成可发布的微信公众号图文稿。
+面向支持本地 Skills 的智能体环境，将主题、项目资料、技术文档和博客整理成可发布的微信公众号图文稿。本项目不依赖特定 IDE 或智能体客户端。
 
 它覆盖写前定向研究、证据核验、标题筛选、移动端排版、动态封面、正文配图、HTML 转换和公众号草稿箱发布。
 
@@ -56,11 +56,11 @@
 
 ### 使用 Skill
 
-- 支持本地 Skills 的 Codex、Antigravity IDE 或兼容智能体环境
+- 能以 `SKILL.md` 作为 Skill 入口，并访问仓库内相对路径的智能体环境
 - 联网检索能力，推荐启用；不可用时自动降级并标记时效性风险
 - 图片生成能力，可选；不可用时输出可执行的配图建议
 
-仓库以根目录中的 `SKILL.md` 和相对路径 `references/` 作为兼容结构。不同客户端的 Skills 目录、联网权限和图片工具可能不同；安装位置与能力授权以对应客户端当前文档为准。
+仓库的运行时核心是根目录中的 `SKILL.md`、`references/` 和相对路径资源，不依赖某个客户端的专属配置。不同客户端的发现机制、Skills 目录、联网权限和图片工具可能不同；安装位置与能力授权以所用客户端的当前文档为准。
 
 ### 使用发布脚本
 
@@ -70,23 +70,24 @@
 
 ## 安装
 
-### Codex
+### 通用安装
+
+将仓库克隆到所用客户端约定的用户级或项目级 Skills 目录，并确保目标目录根部直接包含 `SKILL.md`：
+
+```bash
+git clone https://github.com/briefness/WeChat-Insight-Skill.git /path/to/skills/wechat-article-writer
+```
+
+把 `/path/to/skills` 替换为客户端实际使用的 Skills 目录。安装后重新加载客户端的 Skills。
+
+### Codex 示例
 
 ```bash
 mkdir -p ~/.codex/skills
 git clone https://github.com/briefness/WeChat-Insight-Skill.git ~/.codex/skills/wechat-article-writer
 ```
 
-### Antigravity IDE
-
-```bash
-mkdir -p ~/.antigravity/skills
-git clone https://github.com/briefness/WeChat-Insight-Skill.git ~/.antigravity/skills/wechat-article-writer
-```
-
-安装后重新加载 Skills。目标目录根部应直接包含 `SKILL.md`，目录名保持为 `wechat-article-writer`。
-
-项目级 Skills 的位置由具体客户端决定；将本仓库复制或克隆到客户端约定的项目级目录即可。
+目录名建议保持为 `wechat-article-writer`。其他客户端只需使用各自约定的 Skills 目录；无需修改 `SKILL.md` 的内容结构。
 
 ## 快速开始
 
@@ -264,7 +265,7 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 | 路径 | 作用 |
 |------|------|
 | [`SKILL.md`](./SKILL.md) | Skill 触发条件、核心流程、输出契约和 reference 路由 |
-| [`agents/openai.yaml`](./agents/openai.yaml) | Codex Skill 列表、快捷入口和默认提示的 UI 元数据 |
+| [`agents/openai.yaml`](./agents/openai.yaml) | OpenAI 客户端的可选 UI 元数据，不影响其他环境读取核心 Skill |
 | [`references/writing-playbook.md`](./references/writing-playbook.md) | 写前研究、证据、结构、调性、CTA 和合规规则 |
 | [`references/recommendation-loop.md`](./references/recommendation-loop.md) | 选题准入、标题筛选、传播包装和历史表现复盘 |
 | [`references/wechat-layout.md`](./references/wechat-layout.md) | 公众号移动端排版规则 |
