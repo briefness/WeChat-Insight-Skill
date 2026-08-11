@@ -55,7 +55,7 @@
 | `primary_color` | string | `"#F4845F"` | 正文图片和 HTML 的主强调色（十六进制）；封面仅在用户明确要求品牌统一时使用 |
 | `secondary_color` | string | `"#FDE68A"` | 正文图片的辅助色（十六进制）；封面默认不继承 |
 | `cover_style` | string | `"editorial"` | 内容无法明确路由时的封面兜底风格：`editorial` / `result-led` / `technical` |
-| `use_orange_cat_ip` | boolean | `true` | 是否在正文图片中启用橘猫 IP；不影响封面，封面始终禁用固定 IP |
+| `use_orange_cat_ip` | boolean | `true` | 是否允许生成 AI 正文图；生成的正文图必须使用橘猫。设为 `false` 时仅使用原始真实素材或纯文字降级，不生成无橘猫的正文图；封面始终禁用固定 IP |
 
 ### output — 输出偏好
 

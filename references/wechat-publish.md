@@ -58,7 +58,7 @@ python tools/publish_to_wechat.py article.md --html-only
 只有用户明确选择“是”后，才执行以下命令，并把参数替换为实际 Markdown 文件绝对路径：
 
 ```bash
-python3 /Users/lucas/Desktop/WeChat-Insight-Skill/tools/publish_to_wechat.py "<Markdown 文件绝对路径>" --html-only
+python3 tools/publish_to_wechat.py "<Markdown 文件绝对路径>" --html-only
 ```
 
 用户拒绝或尚未确认时不执行。转换成功后，脚本会在 Markdown 文件同目录生成同名 `.html` 文件；向用户返回该文件的实际路径。HTML 只保留可发布正文，不包含 Markdown 交付包中的“使用假设”“备选标题”“摘要”“正文”包装标题、转发文案和发布前检查；Markdown 源文件保持不变。转换失败时返回原始错误，不得声称文件已生成。
@@ -130,6 +130,8 @@ python tools/publish_to_wechat.py article.md
 1. **检查前置条件**
    - 确认 `tools/publish_to_wechat.py` 文件存在于当前项目目录
    - 检查是否配置了 AppID 和 AppSecret（环境变量或配置文件）
+   - 用脱敏 AppID 确认目标公众号，不输出 AppSecret
+   - 确认用户已授权本次创建草稿，并说明不会自动群发
    - 缺少任何一项，列出需要用户补齐的内容，不继续
 
 2. **生成完整文章**
@@ -141,6 +143,7 @@ python tools/publish_to_wechat.py article.md
    - 保存为临时图片文件
 
 4. **调用发布脚本**
+   - 调用前复述目标账号的脱敏 AppID、文章标题和封面状态
    - 执行 `python tools/publish_to_wechat.py <文章路径> --cover <封面路径>`
    - 捕获输出和错误
 

@@ -27,7 +27,7 @@
 
 ## 核心能力
 
-- **默认写前研究**：生成完整文章前，围绕标题承诺和正文主线检索最新事实、官方资料、真实案例、反例与适用边界。
+- **按需写前研究**：正文涉及最新状态、外部事实、案例或证据缺口时，围绕标题承诺和主线做定向核实。
 - **证据优先**：区分用户亲历、项目证据和外部案例；不编造数据、经验时长、结果或来源。
 - **五类文章路由**：支持技术科普、教程干货、项目复盘、行业观察和产品推广。
 - **标题筛选**：内部生成 6-9 个候选，通过真实性、正文兑现、信息差、账号匹配和移动端可读性门槛后，默认输出 3 个传播假设不同的标题。
@@ -37,7 +37,7 @@
 - **多轮修改**：局部反馈只修改相关内容，并回扫标题、摘要、正文、图片和 CTA 的一致性。
 - **完整交付**：保存 Markdown，并可按需转换 HTML 或发布到微信公众号草稿箱。
 
-写前联网研究默认执行。用户明确要求仅使用所给素材、任务只是局部文字修改或排版，或当前环境无法联网时才跳过。无法联网时，Skill 不会声称已核实最新状态。
+写前先判断是否需要联网研究。纯素材改写、已有证据充分的个人经历或项目复盘可以直接写；涉及价格、版本、平台规则、产品能力、外部数据或最新状态时再检索。无法联网时，Skill 不会声称已核实最新状态。
 
 ## 工作流程
 
@@ -153,7 +153,8 @@ python3 tools/publish_to_wechat.py examples/demo-article.md --html-only
 
 - 每篇完整图文稿至少包含 1 张有信息价值的正文图。
 - 正文图可以使用统一的暖白底、手绘线条和暖橙强调色。
-- 默认启用橘猫 IP；启用时必须承担明确的读者、开发者、状态或流程角色，不能作为背景贴纸、水印或无关装饰。
+- 所有 AI 生成的正文图强制使用同一橘猫 IP；橘猫必须承担读者、开发者、输入者、决策者、结果接收者或检查执行者等信息角色，不能作为背景贴纸、水印或无关装饰。
+- 原始截图、照片和数据证据保持内容不变；需要统一视觉时，将原图放入带橘猫的解释画布，让橘猫操作具体标注或验证具体结果。
 - 流程图、原理图和对比图优先服务理解，不使用 Mermaid 或网页交互组件。
 
 图片工具不可用、生成失败或用户明确要求纯文字时，Skill 会输出包含图片类型、画面内容、关键标注和比例的配图建议，并在发布前检查中说明未生成原因。
@@ -180,7 +181,7 @@ cp config.example.json .wechat-writer-config.json
 | 作者 | `name`, `bio`, `signature`, `tone`, `fixed_cta` | 作者信息、签名、默认调性和固定 CTA |
 | 定位 | `primary_audience`, `content_pillars`, `reader_problems`, `avoid_topics` | 账号长期读者、栏目和选题边界 |
 | 公众号 | `app_id`, `app_secret`, `default_author`, `default_digest_source`, `need_open_comment`, `only_fans_can_comment` | 发布凭证、默认作者、摘要来源和评论设置 |
-| 品牌 | `primary_color`, `secondary_color`, `cover_style`, `use_orange_cat_ip` | 正文色板、封面兜底方向和正文 IP 设置 |
+| 品牌 | `primary_color`, `secondary_color`, `cover_style`, `use_orange_cat_ip` | 正文色板、封面兜底方向和正文 IP 设置；关闭橘猫时不生成 AI 正文图 |
 | 输出 | `title_count`, `digest_min_length`, `digest_max_length`, `forward_copy_count`, `image_mode` | 标题、摘要、转发文案和图片模式 |
 | 表现 | `history_file`, `lookback_count` | 历史表现文件和回看数量 |
 
@@ -263,6 +264,7 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 | 路径 | 作用 |
 |------|------|
 | [`SKILL.md`](./SKILL.md) | Skill 触发条件、核心流程、输出契约和 reference 路由 |
+| [`agents/openai.yaml`](./agents/openai.yaml) | Codex Skill 列表、快捷入口和默认提示的 UI 元数据 |
 | [`references/writing-playbook.md`](./references/writing-playbook.md) | 写前研究、证据、结构、调性、CTA 和合规规则 |
 | [`references/recommendation-loop.md`](./references/recommendation-loop.md) | 选题准入、标题筛选、传播包装和历史表现复盘 |
 | [`references/wechat-layout.md`](./references/wechat-layout.md) | 公众号移动端排版规则 |
