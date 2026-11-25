@@ -2,7 +2,7 @@
 
 面向支持本地 Skills 的智能体环境，将主题、项目资料、技术文档和博客整理成可发布的微信公众号图文稿。本项目不依赖特定 IDE 或智能体客户端。
 
-它覆盖写前定向研究、证据核验、标题筛选、移动端排版、动态封面、正文配图、HTML 转换和公众号草稿箱发布。
+它覆盖写前定向研究、证据核验、推荐安全门、标题筛选、移动端排版、动态封面、正文配图、HTML 转换和公众号草稿箱发布。
 
 > 微信没有公开完整的推荐算法。本项目优化选题匹配、点击理由、阅读体验和真实反馈，但不承诺文章一定获得推荐。
 
@@ -30,8 +30,9 @@
 - **按需写前研究**：正文涉及最新状态、外部事实、案例或证据缺口时，围绕标题承诺和主线做定向核实。
 - **证据优先**：区分用户亲历、项目证据和外部案例；不编造数据、经验时长、结果或来源。
 - **五类文章路由**：支持技术科普、教程干货、项目复盘、行业观察和产品推广。
-- **标题筛选**：内部生成 6-9 个候选，通过真实性、正文兑现、信息差、账号匹配和移动端可读性门槛后，默认输出 3 个传播假设不同的标题。
+- **标题筛选**：内部生成 6-9 个候选，覆盖热词、代表性实体、技术名词、结果冲突和身份场景等注意力信号，再通过真实性、正文兑现、信息差、账号匹配和移动端可读性门槛，默认输出 3 个传播假设不同的标题。
 - **推荐友好包装**：联动标题、摘要、封面、首屏、正文节奏和 CTA，并使用同账号可比历史表现形成弱证据。
+- **推荐安全与漏斗复盘**：依据微信规则中心公开口径拦截标题党、诱导互动、刷量互导、原创滥用和题文不符；按展示、点击、首屏、阅读完成、收藏转发、互动和负反馈定位可改环节，不声称掌握官方推荐公式。
 - **移动端排版**：处理短段落、标题层级、重点句、列表、引用、图片、代码和复杂表格降级。
 - **内容驱动图片**：封面根据当前文章动态生成；正文图片只在提高理解、记忆或可信度时生成。
 - **多轮修改**：局部反馈只修改相关内容，并回扫标题、摘要、正文、图片和 CTA 的一致性。
@@ -179,10 +180,10 @@ cp config.example.json .wechat-writer-config.json
 
 | 分类 | 字段 | 作用 |
 |------|------|------|
-| 作者 | `name`, `bio`, `signature`, `tone`, `fixed_cta` | 作者信息、签名、默认调性和固定 CTA |
+| 作者 | `name`, `bio`, `signature`, `tone`, `fixed_cta`, `voice_samples` | 作者信息、签名、默认调性、固定 CTA 与个人风格参考样本 |
 | 定位 | `primary_audience`, `content_pillars`, `reader_problems`, `avoid_topics` | 账号长期读者、栏目和选题边界 |
 | 公众号 | `app_id`, `app_secret`, `default_author`, `default_digest_source`, `need_open_comment`, `only_fans_can_comment` | 发布凭证、默认作者、摘要来源和评论设置 |
-| 品牌 | `primary_color`, `secondary_color`, `cover_style`, `use_orange_cat_ip` | 正文色板、封面兜底方向和正文 IP 设置；关闭橘猫时不生成 AI 正文图 |
+| 品牌 | `primary_color`, `secondary_color`, `html_theme`, `cover_style`, `use_orange_cat_ip` | 正文色板、HTML 主题（`warm`/`minimal`/`tech`）、封面兜底方向和正文 IP 设置 |
 | 输出 | `title_count`, `digest_min_length`, `digest_max_length`, `forward_copy_count`, `image_mode` | 标题、摘要、转发文案和图片模式 |
 | 表现 | `history_file`, `lookback_count` | 历史表现文件和回看数量 |
 
@@ -202,9 +203,11 @@ Markdown 首行必须是一级标题：
 
 ```bash
 python3 tools/publish_to_wechat.py article.md --html-only
+python3 tools/publish_to_wechat.py article.md --html-only --theme tech
+python3 tools/publish_to_wechat.py article.md --dry-run
 ```
 
-脚本会在 Markdown 同目录生成同名 `.html` 预览页。转换时会移除“使用假设”“备选标题”“摘要”和“正文”包装标题，并截掉“转发文案”“发布前检查”及其后的交付信息，只保留可发布正文。
+脚本会在 Markdown 同目录生成同名 `.html` 预览页（支持桌面 680px / 手机 375px 视图切换、字数统计与一键复制正文/标题/摘要）。转换时会移除“使用假设”“备选标题”“摘要”和“正文”包装标题，并截掉“转发文案”“发布前检查”“本次修改说明”及其后的交付信息，只保留可发布正文；非微信域名的外部链接默认自动转为文末编号脚注（可通过 `--no-link-footnotes` 关闭）。
 
 转换器支持二级/三级标题、粗体、斜体、行内代码、代码块、引用、列表、图片、链接和分隔线。Markdown 表格及复杂 HTML 不受支持，应先改成列表、短段落或图片。
 
@@ -223,6 +226,8 @@ python3 tools/publish_to_wechat.py article.md --cover cover.jpg
 ```bash
 python3 tools/publish_to_wechat.py article.md
 python3 tools/publish_to_wechat.py article.md --cover cover.jpg
+python3 tools/publish_to_wechat.py article.md --cover cover.jpg --dry-run
+python3 tools/publish_to_wechat.py article.md --html-only --theme tech
 python3 tools/publish_to_wechat.py article.md --config ~/.config/wechat-writer/config.json
 python3 tools/publish_to_wechat.py article.md --author "作者名"
 python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
@@ -268,6 +273,8 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 | [`agents/openai.yaml`](./agents/openai.yaml) | OpenAI 客户端的可选 UI 元数据，不影响其他环境读取核心 Skill |
 | [`references/writing-playbook.md`](./references/writing-playbook.md) | 写前研究、证据、结构、调性、CTA 和合规规则 |
 | [`references/recommendation-loop.md`](./references/recommendation-loop.md) | 选题准入、标题筛选、传播包装和历史表现复盘 |
+| [`references/recommendation-signals.md`](./references/recommendation-signals.md) | 微信官方安全门、标题注意力信号、搜索意图与诊断规则 |
+| [`references/user-config.md`](./references/user-config.md) | 个性化配置文件格式、优先级和表现记录字段 |
 | [`references/wechat-layout.md`](./references/wechat-layout.md) | 公众号移动端排版规则 |
 | [`references/cover-image.md`](./references/cover-image.md) | 内容驱动的封面生成与检查规则 |
 | [`references/design-system.md`](./references/design-system.md) | 正文图片的视觉系统 |

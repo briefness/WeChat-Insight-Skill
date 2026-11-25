@@ -21,10 +21,10 @@
 | 场景 | 适合用流程图 |
 |------|------------|
 | 工具/系统的处理流程 | ✅ 如「输入 → API 调用 → 后处理 → 输出」 |
-| 多步骤操作教程 | ✅ 如「安装 → 配置 → 运行 → 验证」 |
+| 多步骤操作教程（≥ 3 步） | ✅ 如「安装 → 配置 → 运行 → 验证」 |
 | 决策分支 | ✅ 如「有 Key？→ 是/否 分支」 |
 | 技术架构关系 | ✅ 如模块间数据流 |
-| 简单的因果或顺序关系 | ❌ 3 步以内，用文字 + emoji 序号即可，不用生成图 |
+| 简单的因果或顺序关系 | ❌ ≤ 2 步且无分支，用文字 + 序号即可，不用生成图 |
 
 ---
 
@@ -196,19 +196,16 @@ Small size, does not overlap any content.
 
 ## 配色方案
 
-每张流程图只用一套配色，不混搭。根据文章调性选：
+所有正文流程图统一继承 `design-system.md` 全局色板（暖白背景 `#FAFAF8` + 墨黑手绘线 `#1A1A1A`），单图不超过 3 种主色，暖橙 `#F4845F` 始终保持为视觉重心：
 
 | 方案 | 主色 | 辅色 | 适用调性 |
 |------|------|------|----------|
-| **暖橙**（默认） | 橙色 `#F4845F` | 浅黄 `#FDE68A` + 白 | 独立开发者 / 教程 |
-| **冷蓝** | 钢蓝 `#5B8DEF` | 浅蓝 `#BFDBFE` + 白 | 硬核技术 / 系统架构 |
-| **深绿** | 墨绿 `#3D9970` | 浅绿 `#A7F3D0` + 白 | 产品流程 / 自动化 |
-
-默认使用**暖橙**方案，与橘猫插图视觉一致。
+| **暖橙常规**（默认） | 暖橙 `#F4845F` | 浅黄 `#FDE68A` + 暖白 `#FAFAF8` | 独立开发者 / 教程 / 产品流程 |
+| **暖橙深蓝对比** | 暖橙 `#F4845F`（视觉重心） | 深海蓝 `#0F172A`（次级/底层模块）+ 暖白 `#FAFAF8` | 硬核技术 / 系统架构 |
 
 在 prompt 里用自然语言描述配色，例如：
-- 暖橙：`warm orange nodes with light yellow highlights`
-- 冷蓝：`steel blue nodes with light blue accent fills`
+- 暖橙常规：`warm orange (#F4845F) primary nodes with light yellow (#FDE68A) highlights on warm white (#FAFAF8) background`
+- 暖橙深蓝对比：`warm orange (#F4845F) focal nodes with deep navy (#0F172A) supporting system nodes on warm white (#FAFAF8) background`
 
 ---
 
@@ -230,6 +227,7 @@ Linear flowchart with [N] steps arranged horizontally (or vertically if N > 4):
 [步骤1描述] → [步骤2描述] → [步骤3描述] → [步骤N描述]
 Each step in a rounded rectangle node. Handwritten Chinese label inside each node.
 Brief annotation below each node in smaller text.
+# 必填：按上方「橘猫融入规则」补充橘猫在起点或终点节点内执行的具体动作
 ```
 
 **示例：**
@@ -267,6 +265,7 @@ Diamond decision node "[判断条件]?"
   → 是 → "[结果A节点]"
   → 否 → "[结果B节点]"
 [继续描述后续分支]
+# 必填：按上方「橘猫融入规则」让橘猫在分支入口节点内手持选项执行决策动作
 ```
 
 ---
@@ -288,6 +287,7 @@ System diagram with [N] components:
 [模块A描述] ←→ [模块B描述] → [模块C描述]
 Each component in a rounded rectangle. Arrow labels in small handwritten text.
 Group related components with a loose dashed boundary if needed.
+# 必填：提供明确的“用户入口”或“结果接收”节点，让橘猫在节点内提交请求或验收输出
 ```
 
 ---
@@ -326,7 +326,7 @@ friendly and approachable, suitable for WeChat mobile reading. 4:3 aspect ratio.
 
 与 A/B/C 类型的视觉差异：
 - A/B/C 以**节点 + 箭头**为主结构，原理图以**隐喻意象**为主结构
-- 原理图的核心元素是一个「能被一眼认出来的物体」（大脑、书架、计价器），不是方框
+- 原理图的核心元素是一个「能被一眼认出来的具体物件」（书架、计价器、过滤网、工作台），避免泛化的“大脑”意象
 - 标注用虚线引出，贴在元素旁边，不在节点内部
 
 **Prompt 模板：**
@@ -341,9 +341,10 @@ sparse layout with generous whitespace, no busy decorations,
 no photorealism, no 3D, no PPT infographic style. WeChat-friendly. 4:3 aspect ratio.
 
 Concept: [用一句话描述要解释的原理或概念]
-Visual metaphor: [用什么比喻或意象来承载这个概念]
+Visual metaphor: [用什么具体比喻或意象来承载这个概念]
 Key elements to label: [需要标注的 2-4 个关键词，直接复用文章里的词]
 Layout: [描述图的大致构图，如「中心一个大元素，四周标注」或「左右对比」]
+# 必填：按上方「橘猫融入规则」让橘猫触发机制输入或验收输出结果
 ```
 
 **示例：**
@@ -354,10 +355,11 @@ Hand-drawn concept diagram, loose sketchy ink outlines, flat warm orange fills,
 light yellow accents, white background, handwritten labels. No PPT style. WeChat 4:3.
 
 Concept: RAG retrieval-augmented generation — AI looks up a knowledge base before answering
-Visual metaphor: a brain connected to a bookshelf by a dotted search arrow
-Key elements: center oval labeled "大模型", left bookshelf labeled "知识库",
-dotted arrow from bookshelf to brain labeled "检索", output arrow right labeled "回答"
-Layout: three elements in a row, center brain is largest, labels in small handwritten Chinese
+Visual metaphor: a bookshelf connected to an answer workbench by a dotted search arrow
+Key elements: left bookshelf labeled "知识库", dotted arrow labeled "查资料",
+center workbench labeled "大模型", output card on right labeled "回答"
+Layout: left to right flow, labels in small handwritten Chinese.
+Orange tabby cat leans into the bookshelf sliding a paw along book spines to pull out the matching card and pass it along the dotted arrow.
 ```
 
 - Token 计费原理：
@@ -369,7 +371,8 @@ Concept: the more text you send and receive, the more tokens are consumed and bi
 Visual metaphor: an old-fashioned taxi meter with a speech bubble feeding into it
 Key elements: speech bubble on left labeled "你说的话", meter in center labeled "Token 计数",
 coin dropping at bottom labeled "计费", small number display labeled "上下文窗口"
-Layout: horizontal, left to right flow, meter is the visual anchor in the center
+Layout: horizontal, left to right flow, meter is the visual anchor in the center.
+Small orange tabby cat holds up the speech bubble card and feeds it into the meter slot.
 ```
 
 ---
@@ -426,6 +429,7 @@ Right column items:
 - "[填入条目1]"
 - "[填入条目2]"
 
+# 必填：左右两列各放同一只小橘猫，用截然不同的肢体动作体现两种状态对比
 Generous whitespace above and below. Clean, minimal, no decorative noise.
 ```
 
@@ -455,9 +459,9 @@ Generous whitespace. Hand-drawn loose borders around each column.
 | 参数 | 值 |
 |------|----|
 | 宽高比 | **4:3**（竖屏手机上比 16:9 更好读） |
-| 节点数上限 | 单图不超过 **7 个节点**，超过则拆成两张竖向拼接 |
-| 文字标注 | 每个节点标注**不超过 6 个汉字**，保证手机屏幕可读 |
-| 背景 | 白色或极浅暖灰，不用深色底（微信夜间模式会反色） |
+| 节点数上限 | 推荐 **3–5 个节点**，硬上限 **7 个节点**；超过 5 个优先考虑拆图，超过 7 个必须拆成两张竖向拼接 |
+| 文字标注 | 单条中文标注推荐 **2–4 个汉字**（硬上限 **6 个汉字**），单图中文标注 **≤ 4 处**（节点较多的流程优先用英文专有名词或拆图） |
+| 背景 | 暖白 `#FAFAF8`，不用深色底（微信夜间模式会反色） |
 
 > 节点超过 7 个时，将流程拆成两张图分别生成，每张不超过 7 个节点。用 PIL 脚本竖向拼接，在两张图中间插入一条深色横向标注条（如「第一阶段」/「第二阶段」），标注条背景色用 `#1A1A1A`，白色文字。拼接后总高度不超过宽度的 2 倍，避免手机滑动过多。
 
@@ -471,7 +475,7 @@ Generous whitespace. Hand-drawn loose borders around each column.
 
 **触发流程图/架构图（A/B/C）：**
 - 出现了「流程」「步骤」「先…再…然后」「流水线」「pipeline」
-- 有明确的节点数（≥ 4 步）且顺序重要
+- 有明确的节点数（≥ 3 步）且顺序重要
 - 有条件分支（「如果…就…否则…」）
 - 技术架构涉及多个模块交互
 
@@ -480,20 +484,24 @@ Generous whitespace. Hand-drawn loose borders around each column.
 - 文章里出现了生活化比喻，且比喻需要标注 2 个以上技术概念
 - 涉及 AI 原理（RAG、Embedding、Attention）、协议机制（缓存、Token 计费）等抽象概念
 
-**不生成图，改用文字 + emoji 序号（① ② ③）：**
-- 步骤 ≤ 3 且逻辑简单
+**触发对比清单图（E）：**
+- 两组方案、优缺点、适用 vs 不适用场景并列对比
+
+**不生成图，改用文字 + 序号（① ② ③）：**
+- 步骤 ≤ 2 且无分支、逻辑简单
 - 概念可以一句大白话说清，不需要视觉辅助
 
 ### Step 2：选图表类型和配色
 
 | 内容特征 | 选择类型 |
 |----------|----------|
-| 步骤明确、单向推进 | A（线性流程图）|
+| 步骤明确、单向推进（≥ 3 步） | A（线性流程图）|
 | 有条件判断、分叉 | B（分支决策图）|
 | 多模块交互、数据流向 | C（架构关系图）|
 | 技术概念/机制原理解释 | D（原理示意图）|
+| 两组方案/优缺点/适用边界对比 | E（对比清单图）|
 
-配色默认暖橙，按文章调性选（参考上方配色方案表）。
+配色默认暖橙常规，硬核技术或系统架构需要深色对比时选暖橙深蓝对比（参考上方配色方案表）。
 
 ### Step 3：写 Prompt 并生成
 

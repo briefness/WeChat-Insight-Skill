@@ -23,6 +23,7 @@
 | `signature` | string | `""` | 固定签名档，追加在每篇文章末尾（留空则不追加） |
 | `tone` | string | `"indie-dev"` | 默认作者调性：`indie-dev` / `hardcore-tech` / `promo` |
 | `fixed_cta` | string | `""` | 固定 CTA 文案，有需要时覆盖自动生成的 CTA |
+| `voice_samples` | string[] | `[]` | 作者历史代表作本地文件路径（建议 1–3 篇），写前抽样对齐个人句长、节奏和语感（不照搬旧文事实） |
 
 ### positioning — 账号定位
 
@@ -54,6 +55,7 @@
 |------|------|--------|------|
 | `primary_color` | string | `"#F4845F"` | 正文图片和 HTML 的主强调色（十六进制）；封面仅在用户明确要求品牌统一时使用 |
 | `secondary_color` | string | `"#FDE68A"` | 正文图片的辅助色（十六进制）；封面默认不继承 |
+| `html_theme` | string | `"warm"` | HTML 转换与预览内置主题：`warm`（暖橙默认）/ `minimal`（极简黑白）/ `tech`（深蓝科技） |
 | `cover_style` | string | `"editorial"` | 内容无法明确路由时的封面兜底风格：`editorial` / `result-led` / `technical` |
 | `use_orange_cat_ip` | boolean | `true` | 是否允许生成 AI 正文图；生成的正文图必须使用橘猫。设为 `false` 时仅使用原始真实素材或纯文字降级，不生成无橘猫的正文图；封面始终禁用固定 IP |
 
@@ -81,6 +83,8 @@
 ```
 
 字段名称可以随公众号后台实际提供的指标调整。只有后台实际提供 `impressions` 时才填写并比较同口径点击表现；只有阅读量时，不把差异单独归因给标题。Skill 只比较同一账号、同一口径、相近主题且分发条件相近的记录，不把单篇波动当成稳定结论。详细读取和使用规则见 `recommendation-loop.md`。
+
+推荐友好复盘可选增加 `clicks`、`read_through_rate`、`completion_rate`、`negative_feedback`、`recommendation_observation` 和 `trend_context`。只有后台实际提供的指标才填写；推荐入口未知时写 `unknown`，不要把未观察到推荐当成没有推荐。`trend_context` 记录当时的事件/版本、核实来源和分发条件，避免把热点带来的短期波动误判成标题公式。
 
 ## 配置优先级
 

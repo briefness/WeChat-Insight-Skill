@@ -39,16 +39,19 @@
 
 ```bash
 # 最简用法（需要先配置凭证）
-python tools/publish_to_wechat.py article.md
+python3 tools/publish_to_wechat.py article.md
 
-# 指定封面图
-python tools/publish_to_wechat.py article.md --cover cover.jpg
+# 发布前本地预检（不调微信 API，校验标题/作者/摘要上限与图片存在性）
+python3 tools/publish_to_wechat.py article.md --cover cover.jpg --dry-run
+
+# 指定封面图与排版主题（warm / minimal / tech）
+python3 tools/publish_to_wechat.py article.md --cover cover.jpg --theme tech
 
 # 指定配置文件
-python tools/publish_to_wechat.py article.md --config ~/.config/wechat-writer/config.json
+python3 tools/publish_to_wechat.py article.md --config ~/.config/wechat-writer/config.json
 
-# 只生成 HTML 预览，不上传
-python tools/publish_to_wechat.py article.md --html-only
+# 只生成 HTML 预览页，不上传（支持 --theme 与 --no-link-footnotes）
+python3 tools/publish_to_wechat.py article.md --html-only
 ```
 
 ### 完稿后按需转换 HTML
@@ -116,12 +119,12 @@ python tools/publish_to_wechat.py article.md
 发布工具自动将 Markdown 转换为公众号编辑器兼容的 HTML，特点：
 
 - 使用 inline 样式，不依赖外部 CSS，粘贴/上传后样式不丢失
-- 自动过滤“使用假设”“备选标题”“摘要”“正文”包装标题、转发文案和发布前检查，不把交付信息混入公众号正文
+- 支持三套内置零依赖主题：`warm`（默认暖橙）、`minimal`（极简黑白）、`tech`（深蓝科技），可通过 `--theme` 或 `brand.html_theme` 切换
+- 自动将非微信域名外链转为「文本`[1]` + 文末参考链接编号脚注」（公众号正文不支持外部超链接）；可用 `--no-link-footnotes` 关闭
+- 自动过滤“使用假设”“备选标题”“摘要”“正文”包装标题、转发文案、发布前检查和本次修改说明，不把交付信息混入公众号正文
+- `--html-only` 预览页支持 **桌面 680px / 手机 375px** 视图切换、字数与预计阅读时长显示，以及一键复制正文、标题和摘要
 - 字体大小、行高、间距按移动端阅读优化
-- 主色调使用配置文件中的品牌色（默认暖橙 `#F4845F`）
-- 代码块有背景色和圆角
-- 引用块左侧有色块标识
-- 图片居中显示，最大宽度自适应
+- 代码块有背景色和圆角，引用块左侧有色块标识，图片居中显示、最大宽度自适应
 
 ## 发布流程（由 Skill 自动调用时）
 
@@ -134,17 +137,16 @@ python tools/publish_to_wechat.py article.md
    - 确认用户已授权本次创建草稿，并说明不会自动群发
    - 缺少任何一项，列出需要用户补齐的内容，不继续
 
-2. **生成完整文章**
-   - 按正常写作流程生成 Markdown 格式的完整文章
-   - 保存为临时文件
+2. **确认完整文章文件**
+   - 复用已保存的 Markdown 成稿文件（若尚未保存则先落盘），确认首行是一级标题 `# 标题`
 
 3. **生成封面图（如有图片工具）**
-   - 如果有图片生成工具，用推荐标题生成封面
-   - 保存为临时图片文件
+   - 如果有图片生成工具，用推荐标题对应的正文内容生成封面
+   - 保存为本地图片文件
 
 4. **调用发布脚本**
    - 调用前复述目标账号的脱敏 AppID、文章标题和封面状态
-   - 执行 `python tools/publish_to_wechat.py <文章路径> --cover <封面路径>`
+   - 执行 `python3 tools/publish_to_wechat.py <文章路径> --cover <封面路径>`
    - 捕获输出和错误
 
 5. **返回结果**

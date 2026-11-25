@@ -61,7 +61,7 @@ The cat must actively perform the core action of the scene, not stand decorative
 - **核心比喻**：文章里已经出现的生活化比喻，例如「Token 像出租车计价器」
 - **情绪节点**：开头的痛点场景、结尾的行动号召
 
-每篇文章通常配 2–4 张插图。不要每节都配，插图太密会分散注意力。
+不预设插图数量（按正文信息价值决定，与完整图文模式“至少 1 张正文图”保持一致）。不要每节都配，插图太密会分散注意力。
 
 ### Step 2：规划 Shot List
 

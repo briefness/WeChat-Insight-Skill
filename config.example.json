@@ -4,7 +4,8 @@
     "bio": "",
     "signature": "",
     "tone": "indie-dev",
-    "fixed_cta": ""
+    "fixed_cta": "",
+    "voice_samples": []
   },
   "positioning": {
     "primary_audience": "",
@@ -23,6 +24,7 @@
   "brand": {
     "primary_color": "#F4845F",
     "secondary_color": "#FDE68A",
+    "html_theme": "warm",
     "cover_style": "editorial",
     "use_orange_cat_ip": true
   },
