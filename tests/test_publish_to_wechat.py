@@ -158,6 +158,60 @@ class MarkdownToWechatHtmlTests(unittest.TestCase):
         self.assertIn("第一段引用<br/><br/>第二段引用", html)
         self.assertNotIn("font-size: 12px;", html)
 
+    def test_renders_h4_strikethrough_task_list_and_markdown_table(self):
+        markdown = """# 语法兜底测试
+
+#### 四级子标题
+
+这里有 ~~旧方案~~ 和新方案。
+
+- [x] 已完成步骤
+- [ ] 待完成步骤
+
+| 方案 | 成本 |
+|------|------|
+| A | 低 |
+| B | 高 |
+"""
+
+        html = publish_to_wechat.md_to_wechat_html(markdown)
+
+        self.assertIn("<h4 ", html)
+        self.assertIn("四级子标题</h4>", html)
+        self.assertIn("<del ", html)
+        self.assertIn("旧方案</del>", html)
+        self.assertIn(">☑</span>已完成步骤", html)
+        self.assertIn(">☐</span>待完成步骤", html)
+        self.assertIn("<table ", html)
+        self.assertIn(">方案</th>", html)
+        self.assertIn(">低</td>", html)
+
+    def test_dry_run_warns_on_markdown_table_and_oversized_inline_image(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            big_img = Path(tmp_dir) / "huge.png"
+            big_img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * (1024 * 1024 + 512))
+            article_path = Path(tmp_dir) / "article.md"
+            article_path.write_text(
+                "# 预检测试\n\n![大图](huge.png)\n\n| 列1 | 列2 |\n|---|---|\n| 1 | 2 |\n",
+                encoding="utf-8",
+            )
+
+            report = publish_to_wechat.publish_article(str(article_path), dry_run=True)
+            warnings = report["validation"]["warnings"]
+
+            self.assertTrue(any("1MB" in w for w in warnings))
+            self.assertTrue(any("Markdown 表格" in w for w in warnings))
+
+    def test_small_inline_image_skips_compression(self):
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            small_img = Path(tmp_dir) / "small.png"
+            small_img.write_bytes(b"\x89PNG\r\n\x1a\n" + b"0" * 1024)
+
+            path, cleanup = publish_to_wechat.compress_inline_image_if_needed(str(small_img))
+
+            self.assertEqual(str(small_img), path)
+            self.assertIsNone(cleanup)
+
     def test_preview_html_escapes_title_and_script_closing_tag(self):
         article_html = publish_to_wechat.md_to_wechat_html(
             "# A <B> 标题\n\n```html\n<script>alert(1)</script>\n```\n"

@@ -57,7 +57,7 @@
 | `secondary_color` | string | `"#FDE68A"` | 正文图片的辅助色（十六进制）；封面默认不继承 |
 | `html_theme` | string | `"warm"` | HTML 转换与预览内置主题：`warm`（暖橙默认）/ `minimal`（极简黑白）/ `tech`（深蓝科技） |
 | `cover_style` | string | `"editorial"` | 内容无法明确路由时的封面兜底风格：`editorial` / `result-led` / `technical` |
-| `use_orange_cat_ip` | boolean | `true` | 是否允许生成 AI 正文图；生成的正文图必须使用橘猫。设为 `false` 时仅使用原始真实素材或纯文字降级，不生成无橘猫的正文图；封面始终禁用固定 IP |
+| `use_orange_cat_ip` | boolean | `true` | 是否在 AI 生成的正文图中使用固定橘猫 IP。设为 `true` 时每张 AI 正文图必须让橘猫承担功能角色；设为 `false` 时不带橘猫，仍可按 `design-system.md` 生成干净无吉祥物的手绘流程图、原理图和概念插图；封面始终禁用固定 IP |
 
 ### output — 输出偏好
 

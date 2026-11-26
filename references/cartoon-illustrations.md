@@ -12,9 +12,9 @@
 
 ---
 
-## IP 角色：橘猫
+## IP 角色：橘猫（仅 `brand.use_orange_cat_ip: true` 时启用）
 
-每张插图的固定主角是同一只可爱简笔画橘猫。每次生成时都必须带上以下 IP 描述，确保跨图一致性：
+当 `brand.use_orange_cat_ip` 为 `true`（默认）时，每张插图的固定主角是同一只可爱简笔画橘猫；若配置为 `false`，跳过橘猫 IP 描述，改为干净的物件隐喻、场景道具或简约手绘人物动作，其余手绘风格、配色和留白规范不变。开启橘猫时，每次生成都必须带上以下 IP 描述，确保跨图一致性：
 
 ```text
 Recurring IP character: a cute chubby orange tabby cat in simple sketch style —

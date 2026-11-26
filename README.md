@@ -155,7 +155,7 @@ python3 tools/publish_to_wechat.py examples/demo-article.md --html-only
 
 - 每篇完整图文稿至少包含 1 张有信息价值的正文图。
 - 正文图可以使用统一的暖白底、手绘线条和暖橙强调色。
-- 所有 AI 生成的正文图强制使用同一橘猫 IP；橘猫必须承担读者、开发者、输入者、决策者、结果接收者或检查执行者等信息角色，不能作为背景贴纸、水印或无关装饰。
+- 默认开启 `brand.use_orange_cat_ip` 时，AI 生成的正文图使用同一橘猫 IP 承担信息角色（不可作背景贴纸或装饰）；设为 `false` 时跳过橘猫 IP，仍可按同一手绘风格生成干净无吉祥物的流程图、原理图和概念图。
 - 原始截图、照片和数据证据保持内容不变；需要统一视觉时，将原图放入带橘猫的解释画布，让橘猫操作具体标注或验证具体结果。
 - 流程图、原理图和对比图优先服务理解，不使用 Mermaid 或网页交互组件。
 
@@ -209,7 +209,7 @@ python3 tools/publish_to_wechat.py article.md --dry-run
 
 脚本会在 Markdown 同目录生成同名 `.html` 预览页（支持桌面 680px / 手机 375px 视图切换、字数统计与一键复制正文/标题/摘要）。转换时会移除“使用假设”“备选标题”“摘要”和“正文”包装标题，并截掉“转发文案”“发布前检查”“本次修改说明”及其后的交付信息，只保留可发布正文；非微信域名的外部链接默认自动转为文末编号脚注（可通过 `--no-link-footnotes` 关闭）。
 
-转换器支持二级/三级标题、粗体、斜体、行内代码、代码块、引用、列表、图片、链接和分隔线。Markdown 表格及复杂 HTML 不受支持，应先改成列表、短段落或图片。
+转换器支持二/三/四级标题、粗体、斜体、删除线、行内代码、代码块、引用、列表、任务列表、图片、链接、分隔线，并对残留 Markdown 表格提供横向可滚兼容兜底（公众号手机阅读仍建议优先改为列表或配图）。
 
 ### 发布到草稿箱
 
@@ -241,7 +241,14 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 
 未传入 `--digest` 时，脚本默认使用交付稿中的“摘要”区块；没有该区块时从正文首段自动提取。可以通过 `wechat.default_digest_source` 改为始终读取正文首段或要求手动传入摘要，最大长度由 `output.digest_max_length` 控制。
 
-标题及推荐表现由用户按公众号后台实际可见指标补充到：
+标题及推荐表现可通过复盘录入脚本写入（支持直接把后台数据或截图发给 Skill 自动记录并诊断）：
+
+```bash
+python3 tools/record_performance.py --latest --reads 1200 --shares 45 --favorites 60 --new-followers 18
+python3 tools/record_performance.py --list 5
+```
+
+记录保存在：
 
 ```text
 ~/.local/share/wechat-writer/performance.jsonl
@@ -282,8 +289,10 @@ python3 tools/publish_to_wechat.py article.md --digest "公众号摘要"
 | [`references/flowchart-style.md`](./references/flowchart-style.md) | 流程、架构、原理和对比图规则 |
 | [`references/iteration-mode.md`](./references/iteration-mode.md) | 多轮修改和一致性回扫规则 |
 | [`references/wechat-publish.md`](./references/wechat-publish.md) | HTML 转换和公众号发布规则 |
-| [`tools/publish_to_wechat.py`](./tools/publish_to_wechat.py) | 无第三方依赖的 Markdown 转换与发布脚本 |
+| [`tools/publish_to_wechat.py`](./tools/publish_to_wechat.py) | 无第三方依赖的 Markdown 转换、预检、图片压缩与发布脚本 |
+| [`tools/record_performance.py`](./tools/record_performance.py) | 无第三方依赖的发布表现录入与漏斗诊断脚本 |
 | [`tests/test_publish_to_wechat.py`](./tests/test_publish_to_wechat.py) | 发布脚本回归测试 |
+| [`tests/test_record_performance.py`](./tests/test_record_performance.py) | 发布表现复盘脚本回归测试 |
 | [`examples/demo-article.md`](./examples/demo-article.md) | 完整文章输出示例 |
 | [`config.example.json`](./config.example.json) | 配置模板 |
 

@@ -18,13 +18,18 @@ import argparse
 import json
 import os
 import re
+import shutil
+import subprocess
 import sys
+import tempfile
 import urllib.request
 import urllib.error
 import urllib.parse
 import mimetypes
 import uuid
 from pathlib import Path
+
+INLINE_IMAGE_MAX_BYTES = 1024 * 1024  # 微信公众号 uploadimg 正文图上限 1MB
 
 
 # ─── Markdown → 公众号 HTML ───────────────────────────────────────────
@@ -206,7 +211,7 @@ def md_to_wechat_html(
     footnote_index = {}  # escaped_href -> 1-based index
 
     def _format_emphasis(segment: str) -> str:
-        """对已转义的文本处理加粗和斜体。"""
+        """对已转义的文本处理加粗、斜体与删除线。"""
         segment = re.sub(
             r'\*\*([^*]+)\*\*',
             lambda m: f'<strong style="font-weight: bold; color: {accent};">{m.group(1)}</strong>',
@@ -215,6 +220,11 @@ def md_to_wechat_html(
         segment = re.sub(
             r'(?<!\*)\*([^*]+)\*(?!\*)',
             lambda m: f'<em>{m.group(1)}</em>',
+            segment
+        )
+        segment = re.sub(
+            r'~~([^~]+)~~',
+            lambda m: f'<del style="color: #888; text-decoration: line-through;">{m.group(1)}</del>',
             segment
         )
         return segment
@@ -320,6 +330,58 @@ def md_to_wechat_html(
             i += 1
             continue
 
+        # 四级标题
+        if line.startswith('#### '):
+            ol_counter[0] = 0
+            text = line[5:].strip()
+            html_parts.append(
+                f'<h4 style="font-size: 15px; font-weight: bold; '
+                f'margin: 18px 0 8px 0; color: #444; '
+                f'line-height: 1.6;">{inline_format(text)}</h4>'
+            )
+            i += 1
+            continue
+
+        # Markdown 表格兜底（支持从技术博客/文档直接迁移，外层加横向滚动容器）
+        if (
+            '|' in line
+            and i + 1 < len(lines)
+            and _is_table_separator(lines[i + 1])
+        ):
+            ol_counter[0] = 0
+            headers = _split_table_row(line)
+            i += 2  # 跳过表头与分隔行
+            rows = []
+            while i < len(lines) and lines[i].strip() and '|' in lines[i]:
+                rows.append(_split_table_row(lines[i]))
+                i += 1
+            th_cells = ''.join(
+                f'<th style="padding: 8px 10px; border: 1px solid #e5e7eb; '
+                f'background: {quote_bg}; color: #222; font-weight: bold; '
+                f'text-align: left;">{inline_format(cell)}</th>'
+                for cell in headers
+            )
+            body_rows_html = []
+            for r_idx, row in enumerate(rows):
+                row_bg = '#ffffff' if r_idx % 2 == 0 else '#fafafa'
+                padded = row + [''] * max(0, len(headers) - len(row))
+                td_cells = ''.join(
+                    f'<td style="padding: 8px 10px; border: 1px solid #e5e7eb; '
+                    f'background: {row_bg}; color: #333; vertical-align: top;">'
+                    f'{inline_format(cell)}</td>'
+                    for cell in padded[:len(headers)]
+                )
+                body_rows_html.append(f'<tr>{td_cells}</tr>')
+            html_parts.append(
+                '<section style="overflow-x: auto; margin: 20px 0;">'
+                '<table style="width: 100%; border-collapse: collapse; '
+                'font-size: 13.5px; line-height: 1.6;">'
+                f'<thead><tr>{th_cells}</tr></thead>'
+                f'<tbody>{"".join(body_rows_html)}</tbody>'
+                '</table></section>'
+            )
+            continue
+
         # 引用块（兼容空引用行 `>`）
         if line.startswith('> ') or line.strip() == '>':
             ol_counter[0] = 0
@@ -341,15 +403,23 @@ def md_to_wechat_html(
             )
             continue
 
-        # 无序列表 — 用 p 标签模拟，bullet 用 Unicode ● 字符，避开微信对 ul/li 的默认样式覆盖
+        # 无序列表与任务列表 — 用 p 标签模拟，避开微信对 ul/li 的默认样式覆盖
         if re.match(r'^[-*+] ', line):
             ol_counter[0] = 0  # 切换到无序时重置有序计数
-            text = re.sub(r'^[-*+] ', '', line).strip()
+            raw_item = re.sub(r'^[-*+] ', '', line).strip()
+            task_match = re.match(r'^\[([ xX])\]\s+(.*)$', raw_item)
+            if task_match:
+                checked = task_match.group(1).lower() == 'x'
+                bullet = '☑' if checked else '☐'
+                text = task_match.group(2).strip()
+            else:
+                bullet = '●'
+                text = raw_item
             html_parts.append(
                 f'<p style="font-size: 15px; line-height: 1.9; margin: 0 0 8px 0; '
                 f'color: #333; padding-left: 1.2em; text-indent: -1.2em;">'
                 f'<span style="color: {accent}; font-size: 13px; '
-                f'margin-right: 6px;">●</span>'
+                f'margin-right: 6px;">{bullet}</span>'
                 f'{inline_format(text)}</p>'
             )
             i += 1
@@ -458,11 +528,43 @@ def md_to_wechat_html(
     return '\n'.join(html_parts)
 
 
+def _is_table_separator(line: str) -> bool:
+    """判断是否为 Markdown 表格的第二行分隔线（如 |---|---|）。"""
+    return bool(re.match(r'^\s*\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?\s*$', line))
+
+
+def _split_table_row(line: str) -> list:
+    """按管道符拆分 Markdown 表格行并清理首尾竖线与空格。"""
+    stripped = line.strip()
+    if stripped.startswith('|'):
+        stripped = stripped[1:]
+    if stripped.endswith('|'):
+        stripped = stripped[:-1]
+    return [cell.strip() for cell in stripped.split('|')]
+
+
+def _has_markdown_table(md_text: str) -> bool:
+    """检测可发布正文中是否包含 Markdown 表格（忽略代码块）。"""
+    _, body = extract_title_and_body(md_text)
+    lines = strip_delivery_metadata(body).split('\n')
+    in_code_block = False
+    for idx, line in enumerate(lines):
+        if line.strip().startswith('```'):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+        if '|' in line and idx + 1 < len(lines) and _is_table_separator(lines[idx + 1]):
+            return True
+    return False
+
+
 def is_block_start(line: str) -> bool:
     """判断一行是否是块级元素的开始。"""
     stripped = line.strip()
     if stripped.startswith('## '): return True
     if stripped.startswith('### '): return True
+    if stripped.startswith('#### '): return True
     if stripped.startswith('> ') or stripped == '>': return True
     if re.match(r'^[-*+] ', stripped): return True
     if re.match(r'^\d+\. ', stripped): return True
@@ -485,6 +587,70 @@ def escape_html(text: str) -> str:
 
 
 # ─── 微信公众号 API ────────────────────────────────────────────────────
+
+def compress_inline_image_if_needed(
+    image_path: str,
+    max_bytes: int = INLINE_IMAGE_MAX_BYTES,
+) -> tuple:
+    """当正文图片超过微信 1MB 上限时，尝试用系统 sips（macOS）或可选 Pillow 压缩为临时 JPEG。
+
+    返回 (实际上传路径, 需清理的临时文件路径或 None)。零强制第三方依赖。
+    """
+    src = Path(image_path)
+    if not src.exists() or src.stat().st_size <= max_bytes:
+        return image_path, None
+
+    orig_kb = src.stat().st_size // 1024
+    fd, tmp_name = tempfile.mkstemp(prefix='wechat_img_', suffix='.jpg')
+    os.close(fd)
+    tmp_path = Path(tmp_name)
+
+    try:
+        # 1. 优先使用 macOS 自带 sips（零依赖）
+        sips_bin = shutil.which('sips')
+        if sips_bin:
+            for max_dim, quality in ((None, '82'), ('1600', '75'), ('1280', '65')):
+                cmd = [sips_bin, '-s', 'format', 'jpeg', '-s', 'formatOptions', quality]
+                if max_dim:
+                    cmd += ['-Z', max_dim]
+                cmd += [str(src), '--out', str(tmp_path)]
+                proc = subprocess.run(cmd, capture_output=True)
+                if proc.returncode == 0 and tmp_path.exists() and 0 < tmp_path.stat().st_size <= max_bytes:
+                    new_kb = tmp_path.stat().st_size // 1024
+                    print(f"[INFO] 正文图片已自动压缩（sips）：{src.name} {orig_kb}KB → {new_kb}KB")
+                    return str(tmp_path), str(tmp_path)
+
+        # 2. 可选降级：若本机安装了 Pillow 则使用 Pillow 压缩
+        try:
+            from PIL import Image  # type: ignore
+            with Image.open(src) as im:
+                rgb = im.convert('RGB')
+                for max_dim, quality in ((None, 82), (1600, 75), (1280, 65)):
+                    work = rgb.copy()
+                    if max_dim and max(work.size) > max_dim:
+                        work.thumbnail((max_dim, max_dim))
+                    work.save(tmp_path, format='JPEG', quality=quality, optimize=True)
+                    if tmp_path.stat().st_size <= max_bytes:
+                        new_kb = tmp_path.stat().st_size // 1024
+                        print(f"[INFO] 正文图片已自动压缩（Pillow）：{src.name} {orig_kb}KB → {new_kb}KB")
+                        return str(tmp_path), str(tmp_path)
+        except ImportError:
+            pass
+    except Exception as e:
+        print(f"[WARN] 自动压缩正文图片失败（将尝试原图上传）：{e}", file=sys.stderr)
+
+    # 压缩未达标或环境无压缩工具，清理临时文件并回退原图
+    try:
+        if tmp_path.exists():
+            tmp_path.unlink()
+    except OSError:
+        pass
+    print(
+        f"[WARN] 正文图片 {src.name} 体积 {orig_kb}KB 超过微信 1MB 建议上限，请手动压缩以免上传被拒",
+        file=sys.stderr,
+    )
+    return image_path, None
+
 
 class WechatAPI:
     """微信公众号 API 封装，只实现草稿箱相关接口。"""
@@ -652,13 +818,21 @@ class WechatAPI:
     def upload_inline_image(self, image_path: str) -> str:
         """上传正文图片，返回微信 CDN URL。
         使用 /cgi-bin/media/uploadimg 接口，专用于图文正文中的图片。
-        注意：此接口要求已认证的服务号或订阅号，未认证账号会返回 48001。
+        超过 1MB 时自动尝试压缩；未认证账号会返回 48001。
         """
-        result = self._upload_multipart(
-            '/cgi-bin/media/uploadimg',
-            image_path,
-            label='正文图片',
-        )
+        upload_path, tmp_cleanup = compress_inline_image_if_needed(image_path)
+        try:
+            result = self._upload_multipart(
+                '/cgi-bin/media/uploadimg',
+                upload_path,
+                label='正文图片',
+            )
+        finally:
+            if tmp_cleanup:
+                try:
+                    Path(tmp_cleanup).unlink()
+                except OSError:
+                    pass
 
         if 'url' not in result:
             err_code = result.get('errcode', 'unknown')
@@ -924,6 +1098,16 @@ def validate_draft_payload(
     local_images, missing_images = _collect_body_local_images(md_text, md_dir)
     for src in missing_images:
         warnings.append(f"正文引用的本地图片不存在：{src}")
+    for img_str in local_images:
+        img_p = Path(img_str)
+        img_size = img_p.stat().st_size
+        if img_size > INLINE_IMAGE_MAX_BYTES:
+            warnings.append(
+                f"正文图片 {img_p.name} 体积 {img_size / (1024 * 1024):.2f}MB 超过微信 1MB 上限（正式上传时将尝试自动压缩）"
+            )
+
+    if _has_markdown_table(md_text):
+        warnings.append("正文包含 Markdown 表格：已自动渲染为横向可滚表格，发布前请在手机视图确认宽度或改为列表")
 
     html_bytes = len(html_content.encode('utf-8'))
     if html_bytes > 1024 * 1024:
